@@ -1,6 +1,8 @@
 namespace Firmeza.admi.Models;
 
-public class SaleStatus
+public enum SaleStatus
 {
-    
+    Draft,
+    Confirmed,
+    Cancelled,
 }
