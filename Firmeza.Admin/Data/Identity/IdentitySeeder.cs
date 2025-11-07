@@ -16,14 +16,14 @@ namespace Firmeza.Admin.Identity
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-            // 1️⃣ Crear roles si no existen
+            
             if (!await roleManager.RoleExistsAsync(RoleAdmin))
                 await roleManager.CreateAsync(new IdentityRole(RoleAdmin));
 
             if (!await roleManager.RoleExistsAsync(RoleCliente))
                 await roleManager.CreateAsync(new IdentityRole(RoleCliente));
 
-            // 2️⃣ Crear un usuario administrador de ejemplo
+            
             var adminEmail = "admin@firmeza.local";
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
             if (adminUser == null)

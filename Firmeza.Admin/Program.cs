@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Firmeza.Admin.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+var connectionString = builder.Configuration.GetConnectionString("ApplicationDbContextConnection") ?? throw new InvalidOperationException("Connection string 'ApplicationDbContextConnection' not found.");
 
 // update .env from main solution 
 Env.Load("../.env");
@@ -15,6 +16,8 @@ var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION")
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -33,6 +36,9 @@ builder.Services.ConfigureApplicationCookie(opt =>
     opt.LoginPath = "/Identity/Account/Login";
     opt.AccessDeniedPath = "/Identity/Account/AccessDenied";
 });
+
+builder.Services.AddRazorPages();
+
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -56,8 +62,11 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapRazorPages();
 await Firmeza.Admin.Identity.IdentitySeeder.SeedAsync(app.Services);
 app.Run();
