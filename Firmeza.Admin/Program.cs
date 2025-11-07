@@ -1,6 +1,10 @@
+
+using Microsoft.AspNetCore.Identity;
 using DotNetEnv;
+using Firmeza.Admin.Models;
 using Microsoft.EntityFrameworkCore;
 using Firmeza.Admin.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // update .env from main solution 
@@ -11,6 +15,25 @@ var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION")
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+builder.Services
+    .AddIdentity<ApplicationUser, IdentityRole>(options =>
+    {
+        options.Password.RequireNonAlphanumeric = false; 
+        options.Password.RequireUppercase = false;       
+        options.SignIn.RequireConfirmedAccount = false;  
+    })
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders()
+    .AddDefaultUI(); 
+
+
+builder.Services.ConfigureApplicationCookie(opt =>
+{
+    opt.LoginPath = "/Identity/Account/Login";
+    opt.AccessDeniedPath = "/Identity/Account/AccessDenied";
+});
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
@@ -28,11 +51,13 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseAuthentication(); 
+
 
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-
+await Firmeza.Admin.Identity.IdentitySeeder.SeedAsync(app.Services);
 app.Run();

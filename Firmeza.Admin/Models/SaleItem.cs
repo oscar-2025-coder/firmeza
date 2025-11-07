@@ -1,9 +1,12 @@
-namespace Firmeza.admi.Models;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Firmeza.Admin.Models;
 
 public class SaleItem
 {
     public Guid Id { get; set; }
-    public Guid SaledId { get; set; }
+    
+    public Guid SaleId { get; set; }
     public Guid ProductId { get; set; }
     
     public int Quantity { get; set; }

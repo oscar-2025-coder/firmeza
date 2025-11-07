@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Firmeza.admi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251106004628_AddBaseEntities")]
+    [Migration("20251106234956_AddBaseEntities")]
     partial class AddBaseEntities
     {
         /// <inheritdoc />
@@ -121,7 +121,8 @@ namespace Firmeza.admi.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("Amount")
-                        .HasColumnType("numeric");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
 
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
@@ -132,11 +133,9 @@ namespace Firmeza.admi.Migrations
                     b.Property<Guid>("SaleId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("SaledId")
-                        .HasColumnType("uuid");
-
                     b.Property<decimal>("UnitPrice")
-                        .HasColumnType("numeric");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
 
                     b.HasKey("Id");
 
@@ -163,7 +162,7 @@ namespace Firmeza.admi.Migrations
                     b.HasOne("Firmeza.admi.Models.Product", "Product")
                         .WithMany("SaleItems")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Firmeza.admi.Models.Sale", "Sale")

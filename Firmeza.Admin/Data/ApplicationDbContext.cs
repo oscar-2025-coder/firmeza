@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using Firmeza.admi.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Firmeza.Admin.Models;
 namespace Firmeza.Admin.Data;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
@@ -62,6 +63,27 @@ public class ApplicationDbContext : DbContext
             entity.HasOne(s => s.Customer)
                 .WithMany(c => c.Sales)
                 .HasForeignKey(s => s.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+        // SALE ITEM
+        modelBuilder.Entity<SaleItem>(entity =>
+        {
+            entity.Property(i => i.Quantity).IsRequired();
+
+            // Dinero con precisión
+            entity.Property(i => i.UnitPrice).HasPrecision(12, 2);
+            entity.Property(i => i.Amount).HasPrecision(12, 2);
+
+            // FK: SaleItem -> Sale (borrar venta = borrar sus ítems)
+            entity.HasOne(i => i.Sale)
+                .WithMany(s => s.Items)
+                .HasForeignKey(i => i.SaleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // FK: SaleItem -> Product (proteger historial)
+            entity.HasOne(i => i.Product)
+                .WithMany(p => p.SaleItems)
+                .HasForeignKey(i => i.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

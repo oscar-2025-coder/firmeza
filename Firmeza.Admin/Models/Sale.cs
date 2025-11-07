@@ -1,4 +1,4 @@
-namespace Firmeza.admi.Models;
+namespace Firmeza.Admin.Models;
 
 public class Sale
 {
