@@ -1,55 +1,50 @@
-
-using Microsoft.AspNetCore.Identity;
 using DotNetEnv;
-using Firmeza.Admin.Models;
-using Microsoft.EntityFrameworkCore;
 using Firmeza.Admin.Data;
+using Firmeza.Admin.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = builder.Configuration.GetConnectionString("ApplicationDbContextConnection") ?? throw new InvalidOperationException("Connection string 'ApplicationDbContextConnection' not found.");
 
-// update .env from main solution 
+// Load environment variables (.env)
 Env.Load("../.env");
 
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION")
-    ?? throw new NullReferenceException("DB_CONNECTION environment variable not found");
+                       ?? throw new NullReferenceException("DB_CONNECTION environment variable not found");
 
+// DbContext (PostgreSQL)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ApplicationDbContext>();
-
+// Identity with roles + default UI
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
-        options.Password.RequireNonAlphanumeric = false; 
-        options.Password.RequireUppercase = false;       
-        options.SignIn.RequireConfirmedAccount = false;  
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = false;
+        options.SignIn.RequireConfirmedAccount = false;
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders()
-    .AddDefaultUI(); 
+    .AddDefaultUI();
 
-
+// Authentication cookies
 builder.Services.ConfigureApplicationCookie(opt =>
 {
     opt.LoginPath = "/Identity/Account/Login";
     opt.AccessDeniedPath = "/Identity/Account/AccessDenied";
 });
 
-builder.Services.AddRazorPages();
-
-
-// Add services to the container.
+// MVC + Razor Pages
 builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// HTTP pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -57,16 +52,38 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-app.UseAuthentication(); 
 
+app.UseAuthentication();
+
+// Redirect admin (ES/EN) from "/" to "/Admin/Index"
+app.Use(async (context, next) =>
+{
+    var isRoot = context.Request.Path == "/";
+    var isAuthenticated = context.User?.Identity?.IsAuthenticated == true;
+    var isAdminEn = context.User?.IsInRole("Administrator") == true;
+    var isAdminEs = context.User?.IsInRole("Administrador") == true;
+
+    if (isRoot && isAuthenticated && (isAdminEn || isAdminEs))
+    {
+        context.Response.Redirect("/Admin/Index");
+        return;
+    }
+
+    await next();
+});
 
 app.UseAuthorization();
 
-
+// Endpoints
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-
 app.MapRazorPages();
-await Firmeza.Admin.Identity.IdentitySeeder.SeedAsync(app.Services);
+
+// Seeder (roles + admin)
+using (var scope = app.Services.CreateScope())
+{
+    await Firmeza.Admin.Identity.IdentitySeeder.SeedAsync(scope.ServiceProvider);
+}
+
 app.Run();

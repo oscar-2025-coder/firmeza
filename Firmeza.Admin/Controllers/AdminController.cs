@@ -1,14 +1,24 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Firmeza.Admin.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Firmeza.Admin.Controllers;
-
-[Authorize(Roles = "Administrador")]
-public class AdminController : Controller
+namespace Firmeza.Admin.Controllers
 {
-    // GET
-    public IActionResult Index()
+    [Authorize(Roles = "Administrator,Administrador")]
+    public class AdminController : Controller
     {
-        return View();
+        // GET: /Admin/Index
+        public IActionResult Index()
+        {
+            var viewModel = new DashboardMetricsViewModel
+            {
+                TotalProducts = 0,
+                TotalCustomers = 0,
+                TotalSales = 0,
+                RevenueLast30Days = 0m
+            };
+
+            return View(viewModel);
+        }
     }
 }

@@ -1,7 +1,52 @@
-﻿@{
-    ViewData["Title"] = "Panel del Administrador";
-    Layout = null; // cuando tengas _Layout, cámbialo por "_Layout"
+﻿@model Firmeza.Admin.Models.DashboardMetricsViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "_AdminLayout";
 }
 
-<h1>@ViewData["Title"]</h1>
-<p>Solo los usuarios con rol <strong>Administrador</strong> pueden ver esta página.</p>
+<div class="mb-4">
+    <h2 class="h4 mb-1">Welcome, Administrator</h2>
+    <p class="text-muted mb-0">Overview</p>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <div class="fs-2 mb-2">📦</div>
+                <div class="fw-semibold text-primary">Total products</div>
+                <div class="display-6">@Model.TotalProducts</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <div class="fs-2 mb-2">👥</div>
+                <div class="fw-semibold text-primary">Total customers</div>
+                <div class="display-6">@Model.TotalCustomers</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <div class="fs-2 mb-2">🧾</div>
+                <div class="fw-semibold text-primary">Total sales</div>
+                <div class="display-6">@Model.TotalSales</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <div class="fs-2 mb-2">💰</div>
+                <div class="fw-semibold text-primary">Revenue (last 30 days)</div>
+                <div class="display-6">@Model.RevenueLast30Days.ToString("C")</div>
+            </div>
+        </div>
+    </div>
+</div>

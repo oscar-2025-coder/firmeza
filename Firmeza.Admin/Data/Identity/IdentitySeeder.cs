@@ -6,8 +6,8 @@ namespace Firmeza.Admin.Identity
 {
     public static class IdentitySeeder
     {
-        public const string RoleAdmin = "Administrador";
-        public const string RoleCliente = "Cliente";
+        public const string RoleAdministrator = "Administrador";
+        public const string RoleCustomer = "Customer";
 
         public static async Task SeedAsync(IServiceProvider services)
         {
@@ -16,14 +16,14 @@ namespace Firmeza.Admin.Identity
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-            
-            if (!await roleManager.RoleExistsAsync(RoleAdmin))
-                await roleManager.CreateAsync(new IdentityRole(RoleAdmin));
+            // Ensure roles exist
+            if (!await roleManager.RoleExistsAsync(RoleAdministrator))
+                await roleManager.CreateAsync(new IdentityRole(RoleAdministrator));
 
-            if (!await roleManager.RoleExistsAsync(RoleCliente))
-                await roleManager.CreateAsync(new IdentityRole(RoleCliente));
+            if (!await roleManager.RoleExistsAsync(RoleCustomer))
+                await roleManager.CreateAsync(new IdentityRole(RoleCustomer));
 
-            
+            // Ensure an admin user exists
             var adminEmail = "admin@firmeza.local";
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
             if (adminUser == null)
@@ -36,7 +36,7 @@ namespace Firmeza.Admin.Identity
                 };
 
                 await userManager.CreateAsync(adminUser, "Admin123!");
-                await userManager.AddToRoleAsync(adminUser, RoleAdmin);
+                await userManager.AddToRoleAsync(adminUser, RoleAdministrator);
             }
         }
     }
