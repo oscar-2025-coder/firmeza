@@ -1,3 +1,4 @@
+
 namespace Firmeza.Admin.ViewModels.Products
 {
     public class ProductListItemViewModel

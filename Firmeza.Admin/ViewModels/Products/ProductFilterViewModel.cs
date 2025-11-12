@@ -9,11 +9,11 @@ namespace Firmeza.Admin.ViewModels.Products
         public string? Q { get; set; }
 
         // Filtro por rango de precios
-        [Range(typeof(decimal), "0", "9999999.99")]
+        [Range(typeof(decimal), "0", "9999999,99", ErrorMessage = "Enter a valid minimum price between 0 and 9,999,999.99")]
         [Display(Name = "Min Price")]
         public decimal? MinPrice { get; set; }
 
-        [Range(typeof(decimal), "0", "9999999.99")]
+        [Range(typeof(decimal), "0", "9999999,99", ErrorMessage = "Enter a valid maximum price between 0 and 9,999,999.99")]
         [Display(Name = "Max Price")]
         public decimal? MaxPrice { get; set; }
 

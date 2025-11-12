@@ -15,12 +15,12 @@ namespace Firmeza.Admin.ViewModels.Products
         [RegularExpression("^[A-Z0-9_-]+$", ErrorMessage = "Use only A-Z, 0-9, dash or underscore.")]
         public string? Sku { get; set; }
 
-        [Range(typeof(decimal), "0", "9999999.99")]
+        [Range(typeof(decimal), "0", "9999999,99", ErrorMessage = "Enter a valid price between 0 and 9,999,999.99")]
         [Display(Name = "Unit Price")]
         [DataType(DataType.Currency)]
         public decimal UnitPrice { get; set; }
 
-        [Range(0, 1000000)]
+        [Range(0, 1000000, ErrorMessage = "Stock must be between 0 and 1,000,000")]
         [Display(Name = "Stock")]
         public int Stock { get; set; }
 
