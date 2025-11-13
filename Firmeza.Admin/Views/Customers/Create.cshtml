@@ -1,0 +1,58 @@
+﻿@model Firmeza.Admin.ViewModels.Customers.CustomerCreateViewModel
+
+@{
+    ViewData["Title"] = "Create Customer";
+}
+
+<h1 class="mb-4">Create customer</h1>
+
+@await Html.PartialAsync("_Alerts")
+
+@if (!string.IsNullOrWhiteSpace(Model?.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        @Model.ErrorMessage
+    </div>
+}
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="FullName" class="form-label"></label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="DocumentNumber" class="form-label"></label>
+        <input asp-for="DocumentNumber" class="form-control" />
+        <span asp-validation-for="DocumentNumber" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="PhoneNumber" class="form-label"></label>
+        <input asp-for="PhoneNumber" class="form-control" />
+        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="AgeText" class="form-label"></label>
+        <input asp-for="AgeText" class="form-control" />
+        <span asp-validation-for="AgeText" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        Save
+    </button>
+</form>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}
