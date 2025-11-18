@@ -10,22 +10,33 @@
                 🏠 <span>Dashboard</span>
             </a>
         </li>
+
         <li class="nav-item">
             <a class="nav-link d-flex align-items-center gap-2 @(current == "Products" ? "active" : "text-white-50")"
                asp-controller="Products" asp-action="Index">
                 📦 <span>Products</span>
             </a>
         </li>
+
         <li class="nav-item">
             <a class="nav-link d-flex align-items-center gap-2 @(current == "Customers" ? "active" : "text-white-50")"
                asp-controller="Customers" asp-action="Index">
                 👥 <span>Customers</span>
             </a>
         </li>
+
         <li class="nav-item">
             <a class="nav-link d-flex align-items-center gap-2 @(current == "Sales" ? "active" : "text-white-50")"
                asp-controller="Sales" asp-action="Index">
                 💵 <span>Sales</span>
+            </a>
+        </li>
+
+        <!-- 👉 Nueva opción para la Task 8: carga masiva desde Excel -->
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2 @(current == "DataImport" ? "active" : "text-white-50")"
+               asp-controller="DataImport" asp-action="BulkImport">
+                📥 <span>Bulk Import</span>
             </a>
         </li>
     </ul>

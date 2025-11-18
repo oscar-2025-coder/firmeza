@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
+using Firmeza.Admin.Data;
+using Firmeza.Admin.Models;
 using Firmeza.Admin.ViewModels.Imports;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 
 namespace Firmeza.Admin.Controllers;
@@ -13,6 +16,13 @@ namespace Firmeza.Admin.Controllers;
 [Authorize(Roles = "Administrator,Administrador")]
 public class DataImportController : Controller
 {
+    private readonly ApplicationDbContext _context;
+
+    public DataImportController(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
     [HttpGet]
     public IActionResult BulkImport()
     {
@@ -45,7 +55,7 @@ public class DataImportController : Controller
                     if (worksheet == null)
                     {
                         TempData["ErrorMessage"] = "The Excel file has no worksheets.";
-                        return RedirectToAction(nameof(BulkImport));
+                        return View(model);
                     }
 
                     int totalColumns = worksheet.Dimension.End.Column;
@@ -139,11 +149,8 @@ public class DataImportController : Controller
                     }
 
                     // ============ VALIDATION & ERROR LOG ============
-
                     var errors = new List<ImportErrorViewModel>();
                     var emailValidator = new EmailAddressAttribute();
-
-                    // ============ NORMALIZE DATA (PRODUCTS, CUSTOMERS, SALES) ============
 
                     var productsDict = new Dictionary<string, ImportedProductViewModel>(StringComparer.OrdinalIgnoreCase);
                     var customersDict = new Dictionary<string, ImportedCustomerViewModel>(StringComparer.OrdinalIgnoreCase);
@@ -280,24 +287,171 @@ public class DataImportController : Controller
                     var sales = salesList;
                     var errorCount = errors.Count;
 
-                    TempData["SuccessMessage"] =
-                        $"Columns detected: {string.Join(", ", headers)}. " +
-                        $"Rows read: {rawRows.Count}. " +
-                        $"Products found: {products.Count}. " +
-                        $"Customers found: {customers.Count}. " +
-                        $"Sales found: {sales.Count}. " +
-                        $"Errors found: {errorCount}. " +
-                        "(Data normalized and validated in memory, not saved to database yet.)";
+                    // Llenar el ViewModel para la vista
+                    model.TotalRows = rawRows.Count;
+                    model.ProductsCount = products.Count;
+                    model.CustomersCount = customers.Count;
+                    model.SalesCount = sales.Count;
+                    model.ErrorCount = errorCount;
+                    model.Errors = errors;
 
-                    // Más adelante podremos mostrar 'errors' en la vista o guardarlo en algún lugar.
+                    // Si hay errores, no guardamos nada
+                    if (errorCount > 0)
+                    {
+                        TempData["ErrorMessage"] =
+                            $"Data loaded and validated, but there are {errorCount} error(s). Nothing was saved.";
+                        return View(model);
+                    }
+
+                    // ============ PERSISTENCE (UPSERT) ============
+                    using var transaction = _context.Database.BeginTransaction();
+
+                    // ---- UPSERT PRODUCTS ----
+                    var existingProducts = _context.Products.ToList();
+                    var productEntitiesByName = existingProducts
+                        .ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var importedProduct in products)
+                    {
+                        if (productEntitiesByName.TryGetValue(importedProduct.ProductName, out var existing))
+                        {
+                            // Update
+                            if (importedProduct.Price.HasValue)
+                            {
+                                existing.UnitPrice = importedProduct.Price.Value;
+                            }
+                            existing.IsActive = true;
+                        }
+                        else
+                        {
+                            var newProduct = new Product
+                            {
+                                Id = Guid.NewGuid(),
+                                Name = importedProduct.ProductName,
+                                UnitPrice = importedProduct.Price ?? 0m,
+                                IsActive = true,
+                                Stock = 0
+                            };
+                            _context.Products.Add(newProduct);
+                            productEntitiesByName.Add(newProduct.Name, newProduct);
+                        }
+                    }
+
+                    // ---- UPSERT CUSTOMERS ----
+                    var existingCustomers = _context.Customers.ToList();
+                    var customerEntitiesByName = existingCustomers
+                        .ToDictionary(c => c.FullName, StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var importedCustomer in customers)
+                    {
+                        if (customerEntitiesByName.TryGetValue(importedCustomer.CustomerName, out var existing))
+                        {
+                            // Update basic fields
+                            if (!string.IsNullOrWhiteSpace(importedCustomer.Email))
+                            {
+                                existing.Email = importedCustomer.Email!;
+                            }
+
+                            existing.IsActive = true;
+                        }
+                        else
+                        {
+                            var newCustomer = new Customer
+                            {
+                                Id = Guid.NewGuid(),
+                                FullName = importedCustomer.CustomerName,
+                                Email = importedCustomer.Email ?? string.Empty,
+                                DocumentNumber = string.Empty, // no viene en el Excel
+                                PhoneNumber = string.Empty,     // no viene en el Excel
+                                Age = 0,                        // no viene en el Excel
+                                IsActive = true
+                            };
+                            _context.Customers.Add(newCustomer);
+                            customerEntitiesByName.Add(newCustomer.FullName, newCustomer);
+                        }
+                    }
+
+                    _context.SaveChanges();
+
+                    // ---- INSERT SALES ----
+                    var taxRate = 0.19m; // ejemplo de IVA 19%
+                    foreach (var importedSale in sales)
+                    {
+                        if (!productEntitiesByName.TryGetValue(importedSale.ProductName, out var productEntity))
+                        {
+                            errors.Add(new ImportErrorViewModel
+                            {
+                                RowNumber = importedSale.SourceRow,
+                                Message = $"Product '{importedSale.ProductName}' not found when creating sale."
+                            });
+                            continue;
+                        }
+
+                        if (!customerEntitiesByName.TryGetValue(importedSale.CustomerName, out var customerEntity))
+                        {
+                            errors.Add(new ImportErrorViewModel
+                            {
+                                RowNumber = importedSale.SourceRow,
+                                Message = $"Customer '{importedSale.CustomerName}' not found when creating sale."
+                            });
+                            continue;
+                        }
+
+                        var quantity = importedSale.Quantity ?? 1;
+                        var unitPrice = productEntity.UnitPrice;
+                        var amount = unitPrice * quantity;
+                        var subtotal = amount;
+                        var tax = subtotal * taxRate;
+                        var total = subtotal + tax;
+
+                        var saleEntity = new Sale
+                        {
+                            Id = Guid.NewGuid(),
+                            CustomerId = customerEntity.Id,
+                            Date = importedSale.SaleDate.HasValue
+                                ? new DateTimeOffset(importedSale.SaleDate.Value)
+                                : DateTimeOffset.Now,
+                            Subtotal = subtotal,
+                            Tax = tax,
+                            Total = total,
+                            Status = SaleStatus.Confirmed,
+                            Notes = "Imported from Excel"
+                        };
+
+                        var saleItem = new SaleItem
+                        {
+                            Id = Guid.NewGuid(),
+                            ProductId = productEntity.Id,
+                            Quantity = quantity,
+                            UnitPrice = unitPrice,
+                            Amount = amount
+                        };
+
+                        saleEntity.Items.Add(saleItem);
+                        _context.Sales.Add(saleEntity);
+                    }
+
+                    _context.SaveChanges();
+                    transaction.Commit();
+
+                    model.ErrorCount = errors.Count;
+                    model.Errors = errors;
+
+                    TempData["SuccessMessage"] =
+                        $"Import completed. Rows: {rawRows.Count}, " +
+                        $"Products: {products.Count}, Customers: {customers.Count}, Sales: {sales.Count}. " +
+                        (errors.Count > 0
+                            ? $"Warnings: {errors.Count} issue(s) while creating sales."
+                            : "All records saved successfully.");
                 }
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            TempData["ErrorMessage"] = "An error occurred while reading the Excel file.";
+            TempData["ErrorMessage"] = $"ERROR: {ex.Message}";
         }
 
-        return RedirectToAction(nameof(BulkImport));
+
+        return View(model);
     }
 }

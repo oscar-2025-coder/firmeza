@@ -1,14 +1,21 @@
-﻿using System.ComponentModel.DataAnnotations;
-namespace Firmeza.Admin.ViewModels.Imports;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
-public class BulkImportViewModel
+namespace Firmeza.Admin.ViewModels.Imports
 {
-      [Required(ErrorMessage = "Please select an Excel file.")]
-            [Display(Name = "Excel file (.xlsx)")]
-            public IFormFile? File { get; set; }
-    
-            // Later we can add:
-            // - Summary of imported/updated records
-            // - Error log entries
-            // but for now we keep it simple.
+    public class BulkImportViewModel
+    {
+        [Required(ErrorMessage = "Please select an Excel file.")]
+        [Display(Name = "Excel file (.xlsx)")]
+        public IFormFile? File { get; set; }
+
+        public int TotalRows { get; set; }
+        public int ProductsCount { get; set; }
+        public int CustomersCount { get; set; }
+        public int SalesCount { get; set; }
+        public int ErrorCount { get; set; }
+
+        public List<ImportErrorViewModel> Errors { get; set; } = new();
+    }
 }
