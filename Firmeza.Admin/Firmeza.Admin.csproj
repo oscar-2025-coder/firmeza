@@ -43,4 +43,27 @@
       <UpToDateCheckInput Remove="Areas\Identity\Pages\_ViewStart.cshtml" />
     </ItemGroup>
 
+    <ItemGroup>
+      <AdditionalFiles Include="Views\Admin\Index.cshtml" />
+      <AdditionalFiles Include="Views\Customers\Create.cshtml" />
+      <AdditionalFiles Include="Views\Customers\Index.cshtml" />
+      <AdditionalFiles Include="Views\Home\Index.cshtml" />
+      <AdditionalFiles Include="Views\Home\Privacy.cshtml" />
+      <AdditionalFiles Include="Views\Products\Create.cshtml" />
+      <AdditionalFiles Include="Views\Products\Delete.cshtml" />
+      <AdditionalFiles Include="Views\Products\Edit.cshtml" />
+      <AdditionalFiles Include="Views\Products\Index.cshtml" />
+      <AdditionalFiles Include="Views\Sales\Index.cshtml" />
+      <AdditionalFiles Include="Views\Shared\Error.cshtml" />
+      <AdditionalFiles Include="Views\Shared\_AdminLayout.cshtml" />
+      <AdditionalFiles Include="Views\Shared\_AdminSidebar.cshtml" />
+      <AdditionalFiles Include="Views\Shared\_AdminTopbar.cshtml" />
+      <AdditionalFiles Include="Views\Shared\_Alerts.cshtml" />
+      <AdditionalFiles Include="Views\Shared\_Layout.cshtml" />
+      <AdditionalFiles Include="Views\Shared\_LoginPartial.cshtml" />
+      <AdditionalFiles Include="Views\Shared\_ValidationScriptsPartial.cshtml" />
+      <AdditionalFiles Include="Views\_ViewImports.cshtml" />
+      <AdditionalFiles Include="Views\_ViewStart.cshtml" />
+    </ItemGroup>
+
 </Project>
