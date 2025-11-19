@@ -1,5 +1,5 @@
-    @{
-    Layout = null;
+@{
+Layout = null;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -13,25 +13,25 @@
           integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
           crossorigin="anonymous">
 
-    <!-- Optional site styles -->
+    <!-- Site styles -->
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
-<body class="bg-body-tertiary">
+<body>
 <div class="d-flex">
     <!-- Sidebar -->
-    <aside class="flex-shrink-0 bg-dark text-white min-vh-100" style="width: 260px;">
+    <aside class="admin-sidebar flex-shrink-0 text-white">
         <partial name="_AdminSidebar" />
     </aside>
 
     <!-- Main content -->
-    <main class="flex-grow-1">
+    <main class="flex-grow-1 d-flex flex-column">
         <!-- Topbar -->
-        <header class="bg-white border-bottom shadow-sm sticky-top">
+        <header class="admin-topbar sticky-top">
             <partial name="_AdminTopbar" />
         </header>
 
         <!-- Page body -->
-        <section class="container-fluid py-4">
+        <section class="page-content">
             @RenderBody()
         </section>
     </main>

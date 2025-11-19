@@ -10,6 +10,7 @@
 <p>
     <a asp-action="Create" class="btn btn-primary btn-sm">Create New Sale</a>
     <a asp-action="ExportToExcel" class="btn btn-outline-success btn-sm ms-2">Export to Excel</a>
+    <a asp-action="ExportToPdf" class="btn btn-outline-danger btn-sm ms-2">Export to PDF</a>
 </p>
 
 <table class="table table-striped">
@@ -28,7 +29,7 @@
         <tr>
             <td>@sale.Date.ToString("yyyy-MM-dd HH:mm")</td>
             <td>@sale.Customer.FullName</td>
-            <td>@sale.Total</td>
+            <td>@sale.Total.ToString("C")</td>
             <td>@sale.Status</td>
             <td>
                 @if (!string.IsNullOrEmpty(sale.ReceiptFileName))

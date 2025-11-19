@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Firmeza.Admin.Data;
 using Firmeza.Admin.Models;
 using Firmeza.Admin.Services.Pdf;
@@ -10,10 +11,120 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using OfficeOpenXml; // 👈 para Excel
+using OfficeOpenXml;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace Firmeza.Admin.Controllers
 {
+    public class SalesReportItem
+    {
+        public DateTimeOffset Date { get; set; }
+        public string CustomerName { get; set; } = string.Empty;
+        public int ItemsCount { get; set; }
+        public decimal Subtotal { get; set; }
+        public decimal Tax { get; set; }
+        public decimal Total { get; set; }
+        public string Status { get; set; } = string.Empty;
+    }
+
+    public class SalesReportDocument : IDocument
+    {
+        public IList<SalesReportItem> Sales { get; }
+
+        public SalesReportDocument(IList<SalesReportItem> sales)
+        {
+            Sales = sales;
+        }
+
+        public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
+
+        public DocumentSettings GetSettings() => DocumentSettings.Default;
+
+        public void Compose(IDocumentContainer container)
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(30);
+
+                page.Header()
+                    .Text("Sales Report")
+                    .SemiBold()
+                    .FontSize(20)
+                    .AlignCenter();
+
+                page.Content().Column(column =>
+                {
+                    column.Spacing(10);
+
+                    column.Item().Text($"Generated at: {DateTime.Now:yyyy-MM-dd HH:mm}");
+
+                    column.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(2); // Date
+                            columns.RelativeColumn(3); // Customer
+                            columns.RelativeColumn(1); // Items
+                            columns.RelativeColumn(2); // Subtotal
+                            columns.RelativeColumn(2); // Tax
+                            columns.RelativeColumn(2); // Total
+                            columns.RelativeColumn(2); // Status
+                        });
+
+                        table.Header(header =>
+                        {
+                            header.Cell().Element(HeaderCellStyle).Text("Date");
+                            header.Cell().Element(HeaderCellStyle).Text("Customer");
+                            header.Cell().Element(HeaderCellStyle).Text("Items");
+                            header.Cell().Element(HeaderCellStyle).Text("Subtotal");
+                            header.Cell().Element(HeaderCellStyle).Text("Tax");
+                            header.Cell().Element(HeaderCellStyle).Text("Total");
+                            header.Cell().Element(HeaderCellStyle).Text("Status");
+                        });
+
+                        foreach (var sale in Sales)
+                        {
+                            table.Cell().Element(CellStyle).Text(sale.Date.ToString("yyyy-MM-dd HH:mm"));
+                            table.Cell().Element(CellStyle).Text(sale.CustomerName);
+                            table.Cell().Element(CellStyle).Text(sale.ItemsCount.ToString());
+                            table.Cell().Element(CellStyle).Text(sale.Subtotal.ToString("0.00"));
+                            table.Cell().Element(CellStyle).Text(sale.Tax.ToString("0.00"));
+                            table.Cell().Element(CellStyle).Text(sale.Total.ToString("0.00"));
+                            table.Cell().Element(CellStyle).Text(sale.Status);
+                        }
+
+                        static IContainer HeaderCellStyle(IContainer container)
+                        {
+                            return container
+                                .PaddingVertical(5)
+                                .DefaultTextStyle(x => x.SemiBold())
+                                .BorderBottom(1);
+                        }
+
+                        static IContainer CellStyle(IContainer container)
+                        {
+                            return container
+                                .PaddingVertical(5)
+                                .BorderBottom(0.5f);
+                        }
+                    });
+                });
+
+                page.Footer()
+                    .AlignCenter()
+                    .Text(text =>
+                    {
+                        text.CurrentPageNumber();
+                        text.Span(" / ");
+                        text.TotalPages();
+                    });
+            });
+        }
+    }
+
     [Authorize(Roles = "Administrator,Administrador")]
     public class SalesController : Controller
     {
@@ -280,6 +391,40 @@ namespace Firmeza.Admin.Controllers
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 "sales.xlsx"
             );
+        }
+
+        // ===============================
+        // EXPORT SALES TO PDF
+        // ===============================
+        [HttpGet]
+        public async Task<IActionResult> ExportToPdf()
+        {
+            var sales = await _context.Sales
+                .AsNoTracking()
+                .Include(s => s.Customer)
+                .Include(s => s.Items)
+                .OrderByDescending(s => s.Date)
+                .ToListAsync();
+
+            var items = sales
+                .Select(s => new SalesReportItem
+                {
+                    Date = s.Date,
+                    CustomerName = s.Customer.FullName,
+                    ItemsCount = s.Items.Count,
+                    Subtotal = s.Subtotal,
+                    Tax = s.Tax,
+                    Total = s.Total,
+                    Status = s.Status.ToString()
+                })
+                .ToList();
+
+            var document = new SalesReportDocument(items);
+
+            var pdfBytes = document.GeneratePdf();
+            var fileName = $"sales-report-{DateTime.UtcNow:yyyyMMddHHmmss}.pdf";
+
+            return File(pdfBytes, "application/pdf", fileName);
         }
     }
 }

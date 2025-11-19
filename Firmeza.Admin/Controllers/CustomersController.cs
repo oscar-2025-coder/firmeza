@@ -1,16 +1,123 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Firmeza.Admin.Data;
 using Firmeza.Admin.Models;
 using Firmeza.Admin.ViewModels.Customers;
-using OfficeOpenXml; // 👈 EPPlus para Excel
+using OfficeOpenXml; // EPPlus para Excel
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace Firmeza.Admin.Controllers
 {
+    public class CustomerReportItem
+    {
+        public string FullName { get; set; } = string.Empty;
+        public string DocumentNumber { get; set; } = string.Empty;
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
+        public int Age { get; set; }
+        public bool IsActive { get; set; }
+    }
+
+    public class CustomersReportDocument : IDocument
+    {
+        public IList<CustomerReportItem> Customers { get; }
+
+        public CustomersReportDocument(IList<CustomerReportItem> customers)
+        {
+            Customers = customers;
+        }
+
+        public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
+
+        public DocumentSettings GetSettings() => DocumentSettings.Default;
+
+        public void Compose(IDocumentContainer container)
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(30);
+
+                page.Header()
+                    .Text("Customers Report")
+                    .SemiBold()
+                    .FontSize(20)
+                    .AlignCenter();
+
+                page.Content().Column(column =>
+                {
+                    column.Spacing(10);
+
+                    column.Item().Text($"Generated at: {DateTime.Now:yyyy-MM-dd HH:mm}");
+
+                    column.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(3); // Full Name
+                            columns.RelativeColumn(2); // Document
+                            columns.RelativeColumn(3); // Email
+                            columns.RelativeColumn(2); // Phone
+                            columns.RelativeColumn(1); // Age
+                            columns.RelativeColumn(1); // Active
+                        });
+
+                        table.Header(header =>
+                        {
+                            header.Cell().Element(HeaderCellStyle).Text("Full Name");
+                            header.Cell().Element(HeaderCellStyle).Text("Document");
+                            header.Cell().Element(HeaderCellStyle).Text("Email");
+                            header.Cell().Element(HeaderCellStyle).Text("Phone");
+                            header.Cell().Element(HeaderCellStyle).Text("Age");
+                            header.Cell().Element(HeaderCellStyle).Text("Active");
+                        });
+
+                        foreach (var customer in Customers)
+                        {
+                            table.Cell().Element(CellStyle).Text(customer.FullName);
+                            table.Cell().Element(CellStyle).Text(customer.DocumentNumber);
+                            table.Cell().Element(CellStyle).Text(customer.Email ?? string.Empty);
+                            table.Cell().Element(CellStyle).Text(customer.PhoneNumber ?? string.Empty);
+                            table.Cell().Element(CellStyle).Text(customer.Age.ToString());
+                            table.Cell().Element(CellStyle).Text(customer.IsActive ? "Yes" : "No");
+                        }
+
+                        static IContainer HeaderCellStyle(IContainer container)
+                        {
+                            return container
+                                .PaddingVertical(5)
+                                .DefaultTextStyle(x => x.SemiBold())
+                                .BorderBottom(1);
+                        }
+
+                        static IContainer CellStyle(IContainer container)
+                        {
+                            return container
+                                .PaddingVertical(5)
+                                .BorderBottom(0.5f);
+                        }
+                    });
+                });
+
+                page.Footer()
+                    .AlignCenter()
+                    .Text(text =>
+                    {
+                        text.CurrentPageNumber();
+                        text.Span(" / ");
+                        text.TotalPages();
+                    });
+            });
+        }
+    }
+
     [Authorize(Roles = "Administrator,Administrador")]
     public class CustomersController : Controller
     {
@@ -241,6 +348,37 @@ namespace Firmeza.Admin.Controllers
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 "customers.xlsx"
             );
+        }
+
+        // ===============================
+        // EXPORT TO PDF
+        // ===============================
+        [HttpGet]
+        public async Task<IActionResult> ExportToPdf()
+        {
+            var customers = await _context.Customers
+                .AsNoTracking()
+                .OrderBy(c => c.FullName)
+                .ToListAsync();
+
+            var items = customers
+                .Select(c => new CustomerReportItem
+                {
+                    FullName = c.FullName,
+                    DocumentNumber = c.DocumentNumber,
+                    Email = c.Email,
+                    PhoneNumber = c.PhoneNumber,
+                    Age = c.Age,
+                    IsActive = c.IsActive
+                })
+                .ToList();
+
+            var document = new CustomersReportDocument(items);
+
+            var pdfBytes = document.GeneratePdf();
+            var fileName = $"customers-report-{DateTime.UtcNow:yyyyMMddHHmmss}.pdf";
+
+            return File(pdfBytes, "application/pdf", fileName);
         }
     }
 }

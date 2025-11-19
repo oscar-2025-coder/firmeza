@@ -1,22 +1,93 @@
-html {
-  font-size: 14px;
+/* -------------------------------------- */
+/* Root color system                      */
+/* -------------------------------------- */
+:root {
+    --color-primary: #0d6efd;
+    --color-primary-light: #3d8bfd;
+    --color-dark: #343a40;
+    --color-light: #f5f6fa;
+    --color-text: #212529;
+    --color-success: #28a745;
+    --color-danger: #dc3545;
+
+    --sidebar-width: 260px;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
+/* -------------------------------------- */
+/* Typography                             */
+/* -------------------------------------- */
 body {
-  margin-bottom: 60px;
+    font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+    background-color: var(--color-light);
+    color: var(--color-text);
+    line-height: 1.5;
+}
+
+/* -------------------------------------- */
+/* Sidebar                                */
+/* -------------------------------------- */
+.admin-sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--color-dark);
+    min-height: 100vh;
+    padding-top: 1rem;
+}
+
+.admin-sidebar a {
+    color: #d1d1d1;
+    text-decoration: none;
+    display: block;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.95rem;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.admin-sidebar a:hover {
+    background-color: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+.admin-sidebar .active {
+    background-color: var(--color-primary);
+    color: #fff !important;
+}
+
+/* -------------------------------------- */
+/* Topbar                                 */
+/* -------------------------------------- */
+.admin-topbar {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e1e1e1;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+}
+
+/* -------------------------------------- */
+/* Page content spacing                   */
+/* -------------------------------------- */
+.page-content {
+    padding: 1.5rem 2rem;
+}
+
+/* -------------------------------------- */
+/* Cards standard                         */
+/* -------------------------------------- */
+.card {
+    border-radius: 10px;
+    border: 1px solid #ededed;
+}
+
+/* -------------------------------------- */
+/* Buttons                                */
+/* -------------------------------------- */
+.btn-primary {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.btn-primary:hover {
+    background-color: var(--color-primary-light);
+    border-color: var(--color-primary-light);
 }

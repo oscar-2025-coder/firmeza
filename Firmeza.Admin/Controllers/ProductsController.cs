@@ -4,10 +4,112 @@ using Microsoft.EntityFrameworkCore;
 using Firmeza.Admin.Data;
 using Firmeza.Admin.Models;
 using Firmeza.Admin.ViewModels.Products;
-using OfficeOpenXml; // 👈 para EPPlus
+using OfficeOpenXml;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace Firmeza.Admin.Controllers
 {
+    public class ProductReportItem
+    {
+        public string Name { get; set; } = string.Empty;
+        public string? Sku { get; set; }
+        public decimal UnitPrice { get; set; }
+        public int Stock { get; set; }
+        public bool IsActive { get; set; }
+    }
+
+    public class ProductsReportDocument : IDocument
+    {
+        public IList<ProductReportItem> Products { get; }
+
+        public ProductsReportDocument(IList<ProductReportItem> products)
+        {
+            Products = products;
+        }
+
+        public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
+
+        public DocumentSettings GetSettings() => DocumentSettings.Default;
+
+        public void Compose(IDocumentContainer container)
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(30);
+
+                page.Header()
+                    .Text("Products Report")
+                    .SemiBold()
+                    .FontSize(20)
+                    .AlignCenter();
+
+                page.Content().Column(column =>
+                {
+                    column.Spacing(10);
+
+                    column.Item().Text($"Generated at: {DateTime.Now:yyyy-MM-dd HH:mm}");
+
+                    column.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(3); // Name
+                            columns.RelativeColumn(2); // SKU
+                            columns.RelativeColumn(2); // Price
+                            columns.RelativeColumn(2); // Stock
+                            columns.RelativeColumn(1); // Active
+                        });
+
+                        table.Header(header =>
+                        {
+                            header.Cell().Element(HeaderCellStyle).Text("Name");
+                            header.Cell().Element(HeaderCellStyle).Text("SKU");
+                            header.Cell().Element(HeaderCellStyle).Text("Price");
+                            header.Cell().Element(HeaderCellStyle).Text("Stock");
+                            header.Cell().Element(HeaderCellStyle).Text("Active");
+                        });
+
+                        foreach (var product in Products)
+                        {
+                            table.Cell().Element(CellStyle).Text(product.Name);
+                            table.Cell().Element(CellStyle).Text(product.Sku ?? string.Empty);
+                            table.Cell().Element(CellStyle).Text(product.UnitPrice.ToString("0.00"));
+                            table.Cell().Element(CellStyle).Text(product.Stock.ToString());
+                            table.Cell().Element(CellStyle).Text(product.IsActive ? "Yes" : "No");
+                        }
+
+                        static IContainer HeaderCellStyle(IContainer container)
+                        {
+                            return container
+                                .PaddingVertical(5)
+                                .DefaultTextStyle(x => x.SemiBold())
+                                .BorderBottom(1);
+                        }
+
+                        static IContainer CellStyle(IContainer container)
+                        {
+                            return container
+                                .PaddingVertical(5)
+                                .BorderBottom(0.5f);
+                        }
+                    });
+                });
+
+                page.Footer()
+                    .AlignCenter()
+                    .Text(text =>
+                    {
+                        text.CurrentPageNumber();
+                        text.Span(" / ");
+                        text.TotalPages();
+                    });
+            });
+        }
+    }
+
     [Authorize(Roles = "Administrator,Administrador")]
     public class ProductsController : Controller
     {
@@ -301,6 +403,37 @@ namespace Firmeza.Admin.Controllers
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 "products.xlsx"
             );
+        }
+
+        // ===============================
+        // EXPORT TO PDF
+        // ===============================
+        [HttpGet]
+        public async Task<IActionResult> ExportToPdf()
+        {
+            var products = await _db.Products
+                .AsNoTracking()
+                .OrderBy(p => p.Name)
+                .ToListAsync();
+
+            var items = products
+                .Select(p => new ProductReportItem
+                {
+                    Name = p.Name,
+                    Sku = p.Sku,
+                    UnitPrice = p.UnitPrice,
+                    Stock = p.Stock,
+                    IsActive = p.IsActive
+                })
+                .ToList();
+
+            var document = new ProductsReportDocument(items);
+
+            var pdfBytes = document.GeneratePdf();
+
+            var fileName = $"products-report-{DateTime.UtcNow:yyyyMMddHHmmss}.pdf";
+
+            return File(pdfBytes, "application/pdf", fileName);
         }
     }
 }
