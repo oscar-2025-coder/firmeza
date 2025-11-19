@@ -8,10 +8,14 @@
 
     <h2 class="mb-4">Customers</h2>
 
-    <!-- Button to go to Create -->
+    <!-- Buttons -->
     <div class="mb-3">
         <a asp-action="Create" class="btn btn-primary">
             Create new customer
+        </a>
+
+        <a asp-action="ExportToExcel" class="btn btn-outline-success ms-2">
+            ⬇️ Export to Excel
         </a>
     </div>
 
@@ -23,7 +27,7 @@
             <th>Document</th>
             <th>Email</th>
             <th>Phone Number</th>
-            <th>Actions</th>
+            <th style="width: 150px;">Actions</th>
         </tr>
         </thead>
 

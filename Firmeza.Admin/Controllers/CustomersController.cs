@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Firmeza.Admin.Data;
 using Firmeza.Admin.Models;
 using Firmeza.Admin.ViewModels.Customers;
+using OfficeOpenXml; // 👈 EPPlus para Excel
 
 namespace Firmeza.Admin.Controllers
 {
@@ -193,6 +194,53 @@ namespace Firmeza.Admin.Controllers
             TempData["SuccessMessage"] = "Customer deleted successfully.";
 
             return RedirectToAction(nameof(Index));
+        }
+
+        // ===============================
+        // EXPORT TO EXCEL
+        // ===============================
+        [HttpGet]
+        public async Task<IActionResult> ExportToExcel()
+        {
+            var customers = await _context.Customers
+                .AsNoTracking()
+                .OrderBy(c => c.FullName)
+                .ToListAsync();
+
+            // EPPlus license context
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            using var package = new ExcelPackage();
+            var worksheet = package.Workbook.Worksheets.Add("Customers");
+
+            // Headers
+            worksheet.Cells[1, 1].Value = "Full Name";
+            worksheet.Cells[1, 2].Value = "Document";
+            worksheet.Cells[1, 3].Value = "Email";
+            worksheet.Cells[1, 4].Value = "Phone";
+            worksheet.Cells[1, 5].Value = "Age";
+            worksheet.Cells[1, 6].Value = "Active";
+
+            // Data
+            var row = 2;
+            foreach (var c in customers)
+            {
+                worksheet.Cells[row, 1].Value = c.FullName;
+                worksheet.Cells[row, 2].Value = c.DocumentNumber;
+                worksheet.Cells[row, 3].Value = c.Email;
+                worksheet.Cells[row, 4].Value = c.PhoneNumber;
+                worksheet.Cells[row, 5].Value = c.Age;
+                worksheet.Cells[row, 6].Value = c.IsActive ? "Yes" : "No";
+                row++;
+            }
+
+            var bytes = package.GetAsByteArray();
+
+            return File(
+                bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "customers.xlsx"
+            );
         }
     }
 }

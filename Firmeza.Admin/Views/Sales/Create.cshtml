@@ -1,0 +1,87 @@
+@model Firmeza.Admin.ViewModels.Sales.SaleCreateViewModel
+
+@{
+    ViewData["Title"] = "Create Sale";
+}
+
+<h1>Create Sale</h1>
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <!-- Customer selection -->
+    <div class="mb-3">
+        <label asp-for="CustomerId" class="form-label"></label>
+        <select asp-for="CustomerId" asp-items="Model.Customers" class="form-select">
+            <option value="">-- Select customer --</option>
+        </select>
+        <span asp-validation-for="CustomerId" class="text-danger"></span>
+    </div>
+
+    <!-- Notes -->
+    <div class="mb-3">
+        <label asp-for="Notes" class="form-label"></label>
+        <textarea asp-for="Notes" class="form-control"></textarea>
+        <span asp-validation-for="Notes" class="text-danger"></span>
+    </div>
+
+    <h4>Items</h4>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th style="width: 40%;">Product</th>
+                <th style="width: 20%;">Quantity</th>
+                <th style="width: 20%;">Unit Price</th>
+                <th style="width: 20%;">Line Total</th>
+            </tr>
+        </thead>
+        <tbody>
+        @for (int i = 0; i < Model.Items.Count; i++)
+        {
+            <tr>
+                <td>
+                    <select asp-for="Items[i].ProductId"
+                            asp-items="Model.Products"
+                            class="form-select">
+                        <option value="">-- Select product --</option>
+                    </select>
+                    <span asp-validation-for="Items[i].ProductId" class="text-danger"></span>
+                </td>
+                <td>
+                    <input asp-for="Items[i].Quantity" class="form-control" />
+                    <span asp-validation-for="Items[i].Quantity" class="text-danger"></span>
+                </td>
+                <td>
+                    <input asp-for="Items[i].UnitPrice" class="form-control" />
+                    <span asp-validation-for="Items[i].UnitPrice" class="text-danger"></span>
+                </td>
+                <td>
+                    @(Model.Items[i].Quantity * Model.Items[i].UnitPrice)
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <!-- Totals (read-only, real calculation is done on the server) -->
+    <div class="mb-3">
+        <label class="form-label">Subtotal</label>
+        <input class="form-control" value="@Model.Subtotal" readonly />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Tax</label>
+        <input class="form-control" value="@Model.Tax" readonly />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Total</label>
+        <input class="form-control" value="@Model.Total" readonly />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save and Generate Receipt</button>
+    <a asp-action="Index" class="btn btn-secondary">Back to list</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

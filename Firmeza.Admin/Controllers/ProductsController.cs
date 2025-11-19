@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Firmeza.Admin.Data;
 using Firmeza.Admin.Models;
 using Firmeza.Admin.ViewModels.Products;
+using OfficeOpenXml; // 👈 para EPPlus
 
 namespace Firmeza.Admin.Controllers
 {
@@ -255,6 +256,51 @@ namespace Firmeza.Admin.Controllers
                 TempData["ErrorMessage"] = "An error occurred while deleting the product.";
                 return RedirectToAction(nameof(Index));
             }
+        }
+
+        // ===============================
+        // EXPORT TO EXCEL
+        // ===============================
+        [HttpGet]
+        public async Task<IActionResult> ExportToExcel()
+        {
+            var products = await _db.Products
+                .AsNoTracking()
+                .OrderBy(p => p.Name)
+                .ToListAsync();
+
+            // EPPlus license context
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            using var package = new ExcelPackage();
+            var worksheet = package.Workbook.Worksheets.Add("Products");
+
+            // Headers
+            worksheet.Cells[1, 1].Value = "Name";
+            worksheet.Cells[1, 2].Value = "Price";
+            worksheet.Cells[1, 3].Value = "SKU";
+            worksheet.Cells[1, 4].Value = "Stock";
+            worksheet.Cells[1, 5].Value = "Active";
+
+            // Data
+            var row = 2;
+            foreach (var p in products)
+            {
+                worksheet.Cells[row, 1].Value = p.Name;
+                worksheet.Cells[row, 2].Value = p.UnitPrice;
+                worksheet.Cells[row, 3].Value = p.Sku;
+                worksheet.Cells[row, 4].Value = p.Stock;
+                worksheet.Cells[row, 5].Value = p.IsActive ? "Yes" : "No";
+                row++;
+            }
+
+            var bytes = package.GetAsByteArray();
+
+            return File(
+                bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "products.xlsx"
+            );
         }
     }
 }

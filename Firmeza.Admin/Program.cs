@@ -1,10 +1,15 @@
 using DotNetEnv;
 using Firmeza.Admin.Data;
 using Firmeza.Admin.Models;
+using Firmeza.Admin.Services.Pdf;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// QuestPDF license (Community)
+QuestPDF.Settings.License = LicenseType.Community;
 
 // Load environment variables (.env)
 Env.Load("../.env");
@@ -38,6 +43,9 @@ builder.Services.ConfigureApplicationCookie(opt =>
 // MVC + Razor Pages
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+
+// PDF services
+builder.Services.AddTransient<ReceiptPdfService>();
 
 var app = builder.Build();
 

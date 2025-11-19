@@ -1,6 +1,51 @@
+@model IEnumerable<Firmeza.Admin.Models.Sale>
+
 @{
     ViewData["Title"] = "Sales";
     Layout = "_AdminLayout";
 }
+
 <h2 class="h4 mb-3">Sales</h2>
-<p class="text-muted">Placeholder module. Reports and details will come later.</p>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary btn-sm">Create New Sale</a>
+    <a asp-action="ExportToExcel" class="btn btn-outline-success btn-sm ms-2">Export to Excel</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>Date</th>
+        <th>Customer</th>
+        <th>Total</th>
+        <th>Status</th>
+        <th>Receipt</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var sale in Model)
+    {
+        <tr>
+            <td>@sale.Date.ToString("yyyy-MM-dd HH:mm")</td>
+            <td>@sale.Customer.FullName</td>
+            <td>@sale.Total</td>
+            <td>@sale.Status</td>
+            <td>
+                @if (!string.IsNullOrEmpty(sale.ReceiptFileName))
+                {
+                    <a asp-controller="Sales"
+                       asp-action="DownloadReceipt"
+                       asp-route-id="@sale.Id"
+                       class="btn btn-sm btn-outline-danger">
+                        Download PDF
+                    </a>
+                }
+                else
+                {
+                    <span class="text-muted">No receipt</span>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

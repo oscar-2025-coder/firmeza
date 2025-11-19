@@ -66,4 +66,8 @@
       <AdditionalFiles Include="Views\_ViewStart.cshtml" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="wwwroot\receipts\" />
+    </ItemGroup>
+
 </Project>
