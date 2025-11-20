@@ -11,105 +11,6 @@ using QuestPDF.Infrastructure;
 
 namespace Firmeza.Admin.Controllers
 {
-    public class ProductReportItem
-    {
-        public string Name { get; set; } = string.Empty;
-        public string? Sku { get; set; }
-        public decimal UnitPrice { get; set; }
-        public int Stock { get; set; }
-        public bool IsActive { get; set; }
-    }
-
-    public class ProductsReportDocument : IDocument
-    {
-        public IList<ProductReportItem> Products { get; }
-
-        public ProductsReportDocument(IList<ProductReportItem> products)
-        {
-            Products = products;
-        }
-
-        public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
-
-        public DocumentSettings GetSettings() => DocumentSettings.Default;
-
-        public void Compose(IDocumentContainer container)
-        {
-            container.Page(page =>
-            {
-                page.Size(PageSizes.A4);
-                page.Margin(30);
-
-                page.Header()
-                    .Text("Products Report")
-                    .SemiBold()
-                    .FontSize(20)
-                    .AlignCenter();
-
-                page.Content().Column(column =>
-                {
-                    column.Spacing(10);
-
-                    column.Item().Text($"Generated at: {DateTime.Now:yyyy-MM-dd HH:mm}");
-
-                    column.Item().Table(table =>
-                    {
-                        table.ColumnsDefinition(columns =>
-                        {
-                            columns.RelativeColumn(3); // Name
-                            columns.RelativeColumn(2); // SKU
-                            columns.RelativeColumn(2); // Price
-                            columns.RelativeColumn(2); // Stock
-                            columns.RelativeColumn(1); // Active
-                        });
-
-                        table.Header(header =>
-                        {
-                            header.Cell().Element(HeaderCellStyle).Text("Name");
-                            header.Cell().Element(HeaderCellStyle).Text("SKU");
-                            header.Cell().Element(HeaderCellStyle).Text("Price");
-                            header.Cell().Element(HeaderCellStyle).Text("Stock");
-                            header.Cell().Element(HeaderCellStyle).Text("Active");
-                        });
-
-                        foreach (var product in Products)
-                        {
-                            table.Cell().Element(CellStyle).Text(product.Name);
-                            table.Cell().Element(CellStyle).Text(product.Sku ?? string.Empty);
-                            table.Cell().Element(CellStyle).Text(product.UnitPrice.ToString("0.00"));
-                            table.Cell().Element(CellStyle).Text(product.Stock.ToString());
-                            table.Cell().Element(CellStyle).Text(product.IsActive ? "Yes" : "No");
-                        }
-
-                        static IContainer HeaderCellStyle(IContainer container)
-                        {
-                            return container
-                                .PaddingVertical(5)
-                                .DefaultTextStyle(x => x.SemiBold())
-                                .BorderBottom(1);
-                        }
-
-                        static IContainer CellStyle(IContainer container)
-                        {
-                            return container
-                                .PaddingVertical(5)
-                                .BorderBottom(0.5f);
-                        }
-                    });
-                });
-
-                page.Footer()
-                    .AlignCenter()
-                    .Text(text =>
-                    {
-                        text.CurrentPageNumber();
-                        text.Span(" / ");
-                        text.TotalPages();
-                    });
-            });
-        }
-    }
-
     [Authorize(Roles = "Administrator,Administrador")]
     public class ProductsController : Controller
     {
@@ -120,15 +21,14 @@ namespace Firmeza.Admin.Controllers
             _db = db;
         }
 
-        // ===============================
-        // INDEX (READ + SEARCH + FILTER)
-        // ===============================
+        // ============================================================
+        // INDEX
+        // ============================================================
         [HttpGet]
         public async Task<IActionResult> Index([FromQuery] ProductFilterViewModel filter)
         {
             IQueryable<Product> query = _db.Products.AsNoTracking();
 
-            // Search text (Name, SKU, Description)
             if (!string.IsNullOrWhiteSpace(filter.Q))
             {
                 var q = filter.Q.Trim();
@@ -138,18 +38,15 @@ namespace Firmeza.Admin.Controllers
                     (p.Description != null && p.Description.Contains(q)));
             }
 
-            // Price filters
             if (filter.MinPrice.HasValue)
                 query = query.Where(p => p.UnitPrice >= filter.MinPrice.Value);
 
             if (filter.MaxPrice.HasValue)
                 query = query.Where(p => p.UnitPrice <= filter.MaxPrice.Value);
 
-            // Only active
             if (filter.OnlyActive == true)
                 query = query.Where(p => p.IsActive);
 
-            // Build list
             var products = await query
                 .OrderBy(p => p.Name)
                 .Select(p => new ProductListItemViewModel
@@ -167,16 +64,18 @@ namespace Firmeza.Admin.Controllers
             return View(products);
         }
 
-        // ===============================
-        // CREATE
-        // ===============================
+        // ============================================================
+        // CREATE (GET)
+        // ============================================================
         [HttpGet]
         public IActionResult Create()
         {
-            var vm = new ProductFormViewModel();
-            return View(vm);
+            return View(new ProductFormViewModel());
         }
 
+        // ============================================================
+        // CREATE (POST)
+        // ============================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProductFormViewModel vm)
@@ -184,17 +83,19 @@ namespace Firmeza.Admin.Controllers
             if (!ModelState.IsValid)
                 return View(vm);
 
-            // Validate SKU uniqueness
+            // Duplicate SKU check
             if (!string.IsNullOrWhiteSpace(vm.Sku))
             {
                 var sku = vm.Sku.Trim();
-                bool exists = await _db.Products
-                    .AsNoTracking()
-                    .AnyAsync(p => p.Sku == sku);
 
-                if (exists)
+                var existing = await _db.Products
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.Sku == sku);
+
+                if (existing != null)
                 {
-                    ModelState.AddModelError(nameof(vm.Sku), "SKU must be unique.");
+                    vm.ExistingProductId = existing.Id;
+                    vm.DuplicateMessage = $"Product with SKU '{sku}' already exists: {existing.Name}.";
                     return View(vm);
                 }
             }
@@ -207,7 +108,7 @@ namespace Firmeza.Admin.Controllers
                 UnitPrice = vm.UnitPrice,
                 Stock = vm.Stock,
                 IsActive = vm.IsActive,
-                Description = string.IsNullOrWhiteSpace(vm.Description) ? null : vm.Description.Trim()
+                Description = string.IsNullOrWhiteSpace(vm.Description) ? null : vm.Description?.Trim()
             };
 
             try
@@ -218,24 +119,16 @@ namespace Firmeza.Admin.Controllers
                 TempData["SuccessMessage"] = "Product created successfully.";
                 return RedirectToAction(nameof(Index));
             }
-            catch (DbUpdateException ex)
+            catch
             {
-                if (ex.InnerException?.Message.Contains("IX_Products_Sku") == true)
-                {
-                    ModelState.AddModelError(nameof(vm.Sku), "SKU must be unique.");
-                }
-                else
-                {
-                    ModelState.AddModelError(string.Empty, "An error occurred while saving the product.");
-                }
-
+                ModelState.AddModelError(string.Empty, "Database error while creating product.");
                 return View(vm);
             }
         }
 
-        // ===============================
+        // ============================================================
         // EDIT
-        // ===============================
+        // ============================================================
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id)
         {
@@ -243,7 +136,7 @@ namespace Firmeza.Admin.Controllers
             if (product == null)
                 return NotFound();
 
-            var vm = new ProductFormViewModel
+            return View(new ProductFormViewModel
             {
                 Id = product.Id,
                 Name = product.Name,
@@ -252,9 +145,7 @@ namespace Firmeza.Admin.Controllers
                 Stock = product.Stock,
                 IsActive = product.IsActive,
                 Description = product.Description
-            };
-
-            return View(vm);
+            });
         }
 
         [HttpPost]
@@ -268,73 +159,38 @@ namespace Firmeza.Admin.Controllers
             if (product == null)
                 return NotFound();
 
-            // Unique SKU check
-            if (!string.IsNullOrWhiteSpace(vm.Sku))
-            {
-                var sku = vm.Sku.Trim();
-                bool exists = await _db.Products
-                    .AsNoTracking()
-                    .AnyAsync(p => p.Sku == sku && p.Id != vm.Id);
-
-                if (exists)
-                {
-                    ModelState.AddModelError(nameof(vm.Sku), "SKU must be unique.");
-                    return View(vm);
-                }
-            }
-
-            // Update entity
             product.Name = vm.Name.Trim();
             product.Sku = string.IsNullOrWhiteSpace(vm.Sku) ? null : vm.Sku.Trim();
             product.UnitPrice = vm.UnitPrice;
             product.Stock = vm.Stock;
             product.IsActive = vm.IsActive;
-            product.Description = string.IsNullOrWhiteSpace(vm.Description) ? null : vm.Description.Trim();
+            product.Description = string.IsNullOrWhiteSpace(vm.Description) ? null : vm.Description?.Trim();
 
-            try
-            {
-                _db.Update(product);
-                await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = "Product updated successfully.";
-                return RedirectToAction(nameof(Index));
-            }
-            catch (DbUpdateException ex)
-            {
-                if (ex.InnerException?.Message.Contains("IX_Products_Sku") == true)
-                {
-                    ModelState.AddModelError(nameof(vm.Sku), "SKU must be unique.");
-                }
-                else
-                {
-                    ModelState.AddModelError(string.Empty, "An error occurred while updating the product.");
-                }
-
-                return View(vm);
-            }
+            TempData["SuccessMessage"] = "Product updated successfully.";
+            return RedirectToAction(nameof(Index));
         }
 
-        // ===============================
+        // ============================================================
         // DELETE
-        // ===============================
+        // ============================================================
         [HttpGet]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var product = await _db.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
-            if (product == null)
+            var p = await _db.Products.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+            if (p == null)
                 return NotFound();
 
-            var vm = new ProductListItemViewModel
+            return View(new ProductListItemViewModel
             {
-                Id = product.Id,
-                Name = product.Name,
-                Sku = product.Sku,
-                UnitPrice = product.UnitPrice,
-                Stock = product.Stock,
-                IsActive = product.IsActive
-            };
-
-            return View(vm);
+                Id = p.Id,
+                Name = p.Name,
+                Sku = p.Sku,
+                UnitPrice = p.UnitPrice,
+                Stock = p.Stock,
+                IsActive = p.IsActive
+            });
         }
 
         [HttpPost, ActionName("Delete")]
@@ -345,24 +201,16 @@ namespace Firmeza.Admin.Controllers
             if (product == null)
                 return NotFound();
 
-            try
-            {
-                _db.Products.Remove(product);
-                await _db.SaveChangesAsync();
+            _db.Products.Remove(product);
+            await _db.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = "Product deleted successfully.";
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception)
-            {
-                TempData["ErrorMessage"] = "An error occurred while deleting the product.";
-                return RedirectToAction(nameof(Index));
-            }
+            TempData["SuccessMessage"] = "Product deleted successfully.";
+            return RedirectToAction(nameof(Index));
         }
 
-        // ===============================
+        // ============================================================
         // EXPORT TO EXCEL
-        // ===============================
+        // ============================================================
         [HttpGet]
         public async Task<IActionResult> ExportToExcel()
         {
@@ -371,69 +219,130 @@ namespace Firmeza.Admin.Controllers
                 .OrderBy(p => p.Name)
                 .ToListAsync();
 
-            // EPPlus license context
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
             using var package = new ExcelPackage();
-            var worksheet = package.Workbook.Worksheets.Add("Products");
+            var sheet = package.Workbook.Worksheets.Add("Products");
 
-            // Headers
-            worksheet.Cells[1, 1].Value = "Name";
-            worksheet.Cells[1, 2].Value = "Price";
-            worksheet.Cells[1, 3].Value = "SKU";
-            worksheet.Cells[1, 4].Value = "Stock";
-            worksheet.Cells[1, 5].Value = "Active";
+            sheet.Cells[1, 1].Value = "Name";
+            sheet.Cells[1, 2].Value = "SKU";
+            sheet.Cells[1, 3].Value = "Unit Price";
+            sheet.Cells[1, 4].Value = "Stock";
+            sheet.Cells[1, 5].Value = "Active";
 
-            // Data
-            var row = 2;
+            int row = 2;
             foreach (var p in products)
             {
-                worksheet.Cells[row, 1].Value = p.Name;
-                worksheet.Cells[row, 2].Value = p.UnitPrice;
-                worksheet.Cells[row, 3].Value = p.Sku;
-                worksheet.Cells[row, 4].Value = p.Stock;
-                worksheet.Cells[row, 5].Value = p.IsActive ? "Yes" : "No";
+                sheet.Cells[row, 1].Value = p.Name;
+                sheet.Cells[row, 2].Value = p.Sku;
+                sheet.Cells[row, 3].Value = p.UnitPrice;
+                sheet.Cells[row, 4].Value = p.Stock;
+                sheet.Cells[row, 5].Value = p.IsActive ? "Yes" : "No";
                 row++;
             }
 
             var bytes = package.GetAsByteArray();
-
-            return File(
-                bytes,
+            return File(bytes,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                "products.xlsx"
-            );
+                "products.xlsx");
         }
 
-        // ===============================
+        // ============================================================
         // EXPORT TO PDF
-        // ===============================
+        // ============================================================
+        public class ProductReportRow
+        {
+            public string Name { get; set; } = "";
+            public string? Sku { get; set; }
+            public decimal Price { get; set; }
+            public int Stock { get; set; }
+            public bool Active { get; set; }
+        }
+
+        public class ProductPdfDocument : IDocument
+        {
+            public List<ProductReportRow> Items { get; }
+
+            public ProductPdfDocument(List<ProductReportRow> items)
+            {
+                Items = items;
+            }
+
+            public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
+
+            public DocumentSettings GetSettings() => DocumentSettings.Default;
+
+            public void Compose(IDocumentContainer container)
+            {
+                container.Page(page =>
+                {
+                    page.Margin(20);
+                    page.Size(PageSizes.A4);
+
+                    page.Header().Text("Products Report")
+                        .FontSize(20)
+                        .SemiBold()
+                        .AlignCenter();
+
+                    page.Content().Table(table =>
+                    {
+                        table.ColumnsDefinition(cols =>
+                        {
+                            cols.RelativeColumn(3);
+                            cols.RelativeColumn(2);
+                            cols.RelativeColumn(2);
+                            cols.RelativeColumn(2);
+                            cols.RelativeColumn(1);
+                        });
+
+                        table.Header(h =>
+                        {
+                            h.Cell().BorderBottom(1).Text("Name").SemiBold();
+                            h.Cell().BorderBottom(1).Text("SKU").SemiBold();
+                            h.Cell().BorderBottom(1).Text("Price").SemiBold();
+                            h.Cell().BorderBottom(1).Text("Stock").SemiBold();
+                            h.Cell().BorderBottom(1).Text("Active").SemiBold();
+                        });
+
+                        foreach (var p in Items)
+                        {
+                            table.Cell().BorderBottom(0.5f).Text(p.Name);
+                            table.Cell().BorderBottom(0.5f).Text(p.Sku ?? "");
+                            table.Cell().BorderBottom(0.5f).Text(p.Price.ToString("0.00"));
+                            table.Cell().BorderBottom(0.5f).Text(p.Stock.ToString());
+                            table.Cell().BorderBottom(0.5f).Text(p.Active ? "Yes" : "No");
+                        }
+                    });
+
+                    page.Footer().AlignCenter().Text(x =>
+                    {
+                        x.CurrentPageNumber();
+                        x.Span(" / ");
+                        x.TotalPages();
+                    });
+                });
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> ExportToPdf()
         {
-            var products = await _db.Products
+            var items = await _db.Products
                 .AsNoTracking()
                 .OrderBy(p => p.Name)
-                .ToListAsync();
-
-            var items = products
-                .Select(p => new ProductReportItem
+                .Select(p => new ProductReportRow
                 {
                     Name = p.Name,
                     Sku = p.Sku,
-                    UnitPrice = p.UnitPrice,
+                    Price = p.UnitPrice,
                     Stock = p.Stock,
-                    IsActive = p.IsActive
+                    Active = p.IsActive
                 })
-                .ToList();
+                .ToListAsync();
 
-            var document = new ProductsReportDocument(items);
+            var doc = new ProductPdfDocument(items);
+            var pdf = doc.GeneratePdf();
 
-            var pdfBytes = document.GeneratePdf();
-
-            var fileName = $"products-report-{DateTime.UtcNow:yyyyMMddHHmmss}.pdf";
-
-            return File(pdfBytes, "application/pdf", fileName);
+            return File(pdf, "application/pdf", $"products-report-{DateTime.UtcNow:yyyyMMddHHmmss}.pdf");
         }
     }
 }

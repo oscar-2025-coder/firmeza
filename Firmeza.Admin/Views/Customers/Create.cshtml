@@ -2,57 +2,100 @@
 
 @{
     ViewData["Title"] = "Create Customer";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<h1 class="mb-4">Create customer</h1>
+<div class="container mt-4 mb-5 d-flex justify-content-center">
+    <div class="col-md-9">
+        
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-white border-bottom-0 py-4 px-4">
+                <h2 class="fw-bold mb-0 text-center" style="color: #2c3e50;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-person-plus-fill me-2" viewBox="0 0 16 16">
+                        <path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                        <path fill-rule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
+                    </svg>
+                    Create New Customer
+                </h2>
+            </div>
+            
+            <div class="card-body p-4">
+                
+                <form asp-action="Create" method="post">
+                    
+                    @await Html.PartialAsync("_Alerts")
+                    @if (!string.IsNullOrWhiteSpace(Model?.ErrorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @Model.ErrorMessage
+                        </div>
+                    }
+                    
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
-@await Html.PartialAsync("_Alerts")
+                    <div class="row">
+                        
+                        <div class="col-md-6">
+                            
+                            <div class="mb-3">
+                                <label asp-for="FullName" class="form-label fw-bold"></label>
+                                <input asp-for="FullName" class="form-control" placeholder="Nombre completo" />
+                                <span asp-validation-for="FullName" class="text-danger"></span>
+                            </div>
 
-@if (!string.IsNullOrWhiteSpace(Model?.ErrorMessage))
-{
-    <div class="alert alert-danger">
-        @Model.ErrorMessage
+                            <div class="mb-3">
+                                <label asp-for="DocumentNumber" class="form-label fw-bold"></label>
+                                <input asp-for="DocumentNumber" class="form-control" placeholder="Número de identificación" />
+                                <span asp-validation-for="DocumentNumber" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label asp-for="AgeText" class="form-label fw-bold"></label>
+                                <input asp-for="AgeText" class="form-control" placeholder="Edad (texto)" />
+                                <span asp-validation-for="AgeText" class="text-danger"></span>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="Email" class="form-label fw-bold"></label>
+                                <input asp-for="Email" class="form-control" placeholder="ejemplo@correo.com" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="PhoneNumber" class="form-label fw-bold"></label>
+                                <input asp-for="PhoneNumber" class="form-control" placeholder="300 123 4567" />
+                                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="mt-4 mb-3"/>
+                    
+                    <div class="d-flex justify-content-between pt-2">
+                        <a asp-action="Index" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                             </svg>
+                            Back to List
+                        </a>
+
+                        <button type="submit" class="btn text-white fw-bold shadow-sm d-flex align-items-center gap-2" 
+                                style="background-color: #d35400; border: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
+                              <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01.472L6.345 10.59.836 5.378a.733.733 0 0 1 1.047-.927l4.032 4.032 6.552-6.552z"/>
+                            </svg>
+                            Save Customer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-}
-
-<form asp-action="Create" method="post">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-    <div class="mb-3">
-        <label asp-for="FullName" class="form-label"></label>
-        <input asp-for="FullName" class="form-control" />
-        <span asp-validation-for="FullName" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Email" class="form-label"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="DocumentNumber" class="form-label"></label>
-        <input asp-for="DocumentNumber" class="form-control" />
-        <span asp-validation-for="DocumentNumber" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="PhoneNumber" class="form-label"></label>
-        <input asp-for="PhoneNumber" class="form-control" />
-        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="AgeText" class="form-label"></label>
-        <input asp-for="AgeText" class="form-control" />
-        <span asp-validation-for="AgeText" class="text-danger"></span>
-    </div>
-
-    <button type="submit" class="btn btn-primary">
-        Save
-    </button>
-</form>
+</div>
 
 @section Scripts {
-    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

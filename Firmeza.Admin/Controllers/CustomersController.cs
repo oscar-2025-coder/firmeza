@@ -201,7 +201,8 @@ namespace Firmeza.Admin.Controllers
 
             TempData["SuccessMessage"] = "Customer created successfully.";
 
-            return RedirectToAction(nameof(Create));
+            // ✅ ÚNICA CORRECCIÓN SOLICITADA: Redirigir a Index en lugar de Create
+            return RedirectToAction(nameof(Index)); 
         }
 
         // GET: /Customers/Edit/{id}

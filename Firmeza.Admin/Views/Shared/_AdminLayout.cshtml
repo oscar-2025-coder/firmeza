@@ -5,15 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"] - Firmeza Admin</title>
 
+    <!-- jQuery MUST load first -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJ+Y3B7MBLz9yYjJ1w74u7AOE9B7rjzIcRj5w="
+            crossorigin="anonymous"></script>
+
+    <!-- jQuery Validation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"
+            integrity="sha512-2YjHfZlM90YDpC6I+8zFOM5o+69uulcYt5pF2sUL2PMG8QQJ2oC0xlouSTLWrPEioJ2yqzS6H8Hm6dOvOdzz0Q=="
+            crossorigin="anonymous"></script>
+
+    <!-- jQuery Unobtrusive -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"
+            integrity="sha512-iUw23Yj0SpVt1WzNvqB3yH/XRjH+a/ANQjbsFkhojVkESUe4slpHzqTTw0oPWS0bz63+6GbCuvUdy3Xos9ztjw=="
+            crossorigin="anonymous"></script>
+
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
           crossorigin="anonymous">
 
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
+
 <body>
 <div class="d-flex" style="min-height: 100vh;">
-    <aside class="admin-sidebar flex-shrink-0 text-white" style="width: var(--sidebar-width); background-color: var(--primary-color);">
+    <aside class="admin-sidebar flex-shrink-0 text-white"
+           style="width: var(--sidebar-width); background-color: var(--primary-color);">
         <partial name="_AdminSidebar" />
     </aside>
 
@@ -28,10 +46,11 @@
     </main>
 </div>
 
+<!-- Bootstrap Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>
-        
+
 <script src="~/js/site.js" asp-append-version="true"></script>
 
 @await RenderSectionAsync("Scripts", required: false)

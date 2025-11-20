@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Firmeza.Admin.ViewModels.Products
@@ -30,5 +31,19 @@ namespace Firmeza.Admin.ViewModels.Products
         [StringLength(1000)]
         [Display(Name = "Description")]
         public string? Description { get; set; }
+
+        // ==========================================================
+        // Duplicate SKU handling
+        // ==========================================================
+
+        /// <summary>
+        /// ID of the existing product if a duplicate SKU is found.
+        /// </summary>
+        public Guid? ExistingProductId { get; set; }
+
+        /// <summary>
+        /// Message to show in the Create view when SKU is duplicated.
+        /// </summary>
+        public string? DuplicateMessage { get; set; }
     }
 }
