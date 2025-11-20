@@ -1,54 +1,104 @@
 ﻿@model Firmeza.Admin.ViewModels.Imports.BulkImportViewModel
 
 @{
-    ViewData["Title"] = "Bulk import from Excel";
-    Layout = "_AdminLayout"; // Ajusta el nombre si tu layout se llama distinto
+    ViewData["Title"] = "Importación Masiva";
+    Layout = "_AdminLayout";
 }
 
+<style>
+    .upload-zone {
+        border: 2px dashed #cbd5e1;
+        background-color: #f8fafc;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .upload-zone:hover {
+        border-color: var(--secondary-color);
+        background-color: #fff7ed; /* Naranja muy suave */
+    }
+</style>
+
 <div class="container-fluid">
-    <h1 class="mt-4">Bulk import from Excel</h1>
-    <p class="text-muted">
-        Upload a <strong>.xlsx</strong> file with mixed data (products, customers, sales, etc.)
-        to process it in the system.
-    </p>
+    
+    <div class="d-flex align-items-center justify-content-between mb-4 pt-3">
+        <div>
+            <h2 class="fw-bold mb-0" style="color: var(--primary-color);">📥 Carga Masiva de Datos</h2>
+            <p class="text-muted small mt-1">Sube tu archivo Excel para actualizar el sistema.</p>
+        </div>
+    </div>
 
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="alert alert-success d-flex align-items-center shadow-sm border-0 rounded-3 mb-4" role="alert">
+            <span class="fs-4 me-3">✅</span>
+            <div>
+                <h6 class="alert-heading fw-bold mb-0">¡Éxito!</h6>
+                <small>@TempData["SuccessMessage"]</small>
+            </div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="alert alert-danger d-flex align-items-center shadow-sm border-0 rounded-3 mb-4" role="alert">
+            <span class="fs-4 me-3">❌</span>
+            <div>
+                <h6 class="alert-heading fw-bold mb-0">Error</h6>
+                <small>@TempData["ErrorMessage"]</small>
+            </div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <form asp-action="BulkImport"
-                  asp-controller="DataImport"
-                  method="post"
-                  enctype="multipart/form-data">
-
-                @Html.AntiForgeryToken()
-
-                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
-                <div class="mb-3">
-                    <label asp-for="File" class="form-label"></label>
-                    <input asp-for="File" class="form-control" type="file" accept=".xlsx" />
-                    <span asp-validation-for="File" class="text-danger"></span>
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-6">
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                
+                <div class="card-header text-white text-center py-4" style="background-color: var(--primary-color);">
+                    <h5 class="mb-0 fw-bold">Seleccionar Archivo Excel</h5>
+                    <small class="opacity-75">Formato requerido: .xlsx</small>
                 </div>
 
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-upload"></i> Upload file
-                </button>
-            </form>
+                <div class="card-body p-5">
+                    <form asp-action="BulkImport" asp-controller="DataImport" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        <div class="upload-zone p-5 text-center mb-4 position-relative">
+                            <div class="mb-3 text-success">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="currentColor" class="bi bi-file-earmark-excel" viewBox="0 0 16 16">
+                                  <path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/>
+                                  <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V9H3V2a1 1 0 0 1 1-1h5.5v2zM3 12v-2h2v2H3zm0 1h2v2H4a1 1 0 0 1-1-1v-1zm3 2v-2h3v2H6zm4 0v-2h3v1a1 1 0 0 1-1 1h-2zm3-3h-3v-2h3v2zm-7 0v-2h3v2H6z"/>
+                                </svg>
+                            </div>
+                            
+                            <label asp-for="File" class="form-label fw-bold text-muted fs-5 stretched-link">Click para buscar archivo</label>
+                            <input asp-for="File" class="form-control position-absolute top-0 start-0 w-100 h-100 opacity-0" type="file" accept=".xlsx" />
+                            <div class="mt-2 text-muted small">o arrastra el archivo aquí</div>
+                        </div>
+                        
+                        <div class="text-center mb-3">
+                            <span asp-validation-for="File" class="text-danger fw-bold"></span>
+                            <div asp-validation-summary="ModelOnly" class="text-danger small mt-2"></div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-lg text-white fw-bold shadow-sm" 
+                                    style="background-color: #d35400; border: none;">
+                                <span class="me-2">🚀</span> Procesar Importación
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+                
+                <div class="card-footer bg-light text-center py-3 border-top">
+                    <small class="text-muted">
+                        El proceso puede tardar unos segundos.
+                    </small>
+                </div>
+            </div>
         </div>
     </div>
 </div>

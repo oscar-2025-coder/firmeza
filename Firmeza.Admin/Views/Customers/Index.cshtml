@@ -2,63 +2,70 @@
 
 @{
     ViewData["Title"] = "Customer List";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<div class="container mt-4">
+<div class="container-fluid mt-4">
 
-    <h2 class="mb-4">Customers</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0" style="color: #2c3e50;">👥 Customers</h2>
 
-    <!-- Buttons -->
-    <div class="mb-3">
-        <a asp-action="Create" class="btn btn-primary">
-            Create new customer
-        </a>
+        <div class="d-flex gap-2">
+            <a asp-action="Create" class="btn text-white fw-bold shadow-sm" 
+               style="background-color: #d35400; border: none;">
+                + Create New Customer
+            </a>
 
-        <a asp-action="ExportToExcel" class="btn btn-outline-success ms-2">
-            ⬇️ Export to Excel
-        </a>
-
-        <a asp-action="ExportToPdf" class="btn btn-outline-danger ms-2">
-            ⬇️ Export to PDF
-        </a>
+            <div class="btn-group">
+                <a asp-action="ExportToExcel" class="btn btn-outline-success" title="Export to Excel">
+                    ⬇️ Excel
+                </a>
+                <a asp-action="ExportToPdf" class="btn btn-outline-danger" title="Export to PDF">
+                    ⬇️ PDF
+                </a>
+            </div>
+        </div>
     </div>
 
-    <!-- Customer table -->
-    <table class="table table-striped table-hover">
-        <thead class="table-dark">
-        <tr>
-            <th>Full Name</th>
-            <th>Document</th>
-            <th>Email</th>
-            <th>Phone Number</th>
-            <th style="width: 150px;">Actions</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        @foreach (var customer in Model)
-        {
-            <tr>
-                <td>@customer.FullName</td>
-                <td>@customer.DocumentNumber</td>
-                <td>@customer.Email</td>
-                <td>@customer.PhoneNumber</td>
-                <td>
-                    <a asp-action="Edit"
-                       asp-route-id="@customer.Id"
-                       class="btn btn-sm btn-warning me-1">
-                        Edit
-                    </a>
-
-                    <a asp-action="Delete"
-                       asp-route-id="@customer.Id"
-                       class="btn btn-sm btn-danger">
-                        Delete
-                    </a>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4 py-3">Full Name</th>
+                        <th>Document</th>
+                        <th>Email</th>
+                        <th>Phone Number</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var customer in Model)
+                    {
+                        <tr>
+                            <td class="ps-4 fw-bold text-dark">@customer.FullName</td>
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    @customer.DocumentNumber
+                                </span>
+                            </td>
+                            <td>@customer.Email</td>
+                            <td>@customer.PhoneNumber</td>
+                            <td class="text-end pe-4">
+                                <a asp-action="Edit" asp-route-id="@customer.Id" 
+                                   class="btn btn-sm btn-light text-primary border me-1">
+                                    Edit
+                                </a>
+                                <a asp-action="Delete" asp-route-id="@customer.Id" 
+                                   class="btn btn-sm btn-light text-danger border">
+                                    Delete
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 
 </div>

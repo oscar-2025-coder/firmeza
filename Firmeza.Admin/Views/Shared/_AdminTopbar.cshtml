@@ -1,13 +1,38 @@
+@using Microsoft.AspNetCore.Identity
+@using Firmeza.Admin.Models
+@inject SignInManager<ApplicationUser> SignInManager
+
 <nav class="navbar navbar-light bg-white shadow-sm">
     <div class="container-fluid d-flex justify-content-between align-items-center py-2">
+        
         <div class="d-flex align-items-center gap-2">
-            <span class="fw-semibold fs-6 text-primary">Admin Panel</span>
+            <span class="fw-semibold fs-6" style="color: var(--primary-color);">Admin Panel</span>
             <span class="text-muted">|</span>
             <small class="text-muted">@DateTime.Now.ToString("yyyy-MM-dd")</small>
         </div>
 
         <div class="d-flex align-items-center">
-            <partial name="_LoginPartial" />
+            
+            @if (!SignInManager.IsSignedIn(User))
+            {
+                /* --- CASO 1: NO ESTÁ LOGUEADO (Mostrar Botones) --- */
+                <div class="d-flex gap-2">
+                    <a class="btn btn-outline-primary btn-sm" asp-area="Identity" asp-page="/Account/Register">
+                        Register
+                    </a>
+                    <a class="btn btn-primary btn-sm" asp-area="Identity" asp-page="/Account/Login">
+                        Log in
+                    </a>
+                </div>
+            }
+            else
+            {
+                /* --- CASO 2: YA ESTÁ LOGUEADO (Mostrar solo marca, el Logout está en el Sidebar) --- */
+                <span class="fw-bold text-muted small">
+                    🏗️ Firmeza S.A.S
+                </span>
+            }
+
         </div>
     </div>
 </nav>
@@ -16,11 +41,9 @@
     .navbar {
         border-bottom: 1px solid #e5e5e5;
     }
-
     .navbar .fw-semibold {
         letter-spacing: 0.3px;
     }
-
     .navbar small {
         font-size: 0.85rem;
     }

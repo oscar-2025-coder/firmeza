@@ -8,20 +8,21 @@ using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// QuestPDF license (Community)
+// 1. Licencia PDF
 QuestPDF.Settings.License = LicenseType.Community;
 
-// Load environment variables (.env)
+// 2. Cargar Variables de Entorno
 Env.Load("../.env");
 
+// 3. Conexión a Base de Datos (Solo una vez)
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION")
-                       ?? throw new NullReferenceException("DB_CONNECTION environment variable not found");
+                       ?? builder.Configuration.GetConnectionString("ApplicationDbContextConnection")
+                       ?? throw new InvalidOperationException("Connection string not found.");
 
-// DbContext (PostgreSQL)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// Identity with roles + default UI
+// 4. Configuración de Identity (SOLO UNA VEZ y con UI activada)
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
@@ -31,25 +32,24 @@ builder.Services
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders()
-    .AddDefaultUI();
+    .AddDefaultUI(); // <--- Esto arregla el Login/Register
 
-// Authentication cookies
+// 5. Cookies
 builder.Services.ConfigureApplicationCookie(opt =>
 {
     opt.LoginPath = "/Identity/Account/Login";
     opt.AccessDeniedPath = "/Identity/Account/AccessDenied";
 });
 
-// MVC + Razor Pages
+// 6. Servicios MVC y PDF
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
-
-// PDF services
 builder.Services.AddTransient<ReceiptPdfService>();
 
 var app = builder.Build();
 
-// HTTP pipeline
+// --- PIPELINE ---
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -58,12 +58,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
 
 app.UseAuthentication();
+app.UseAuthorization();
 
-// Redirect admin (ES/EN) from "/" to "/Admin/Index"
+// Redirección Admin
 app.Use(async (context, next) =>
 {
     var isRoot = context.Request.Path == "/";
@@ -76,19 +76,16 @@ app.Use(async (context, next) =>
         context.Response.Redirect("/Admin/Index");
         return;
     }
-
     await next();
 });
 
-app.UseAuthorization();
-
-// Endpoints
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
 
-// Seeder (roles + admin)
+// 7. SEEDER (Semilla de Datos)
+// Tu código pide usar "IdentitySeeder". Vamos a crear ese archivo ahora.
 using (var scope = app.Services.CreateScope())
 {
     await Firmeza.Admin.Identity.IdentitySeeder.SeedAsync(scope.ServiceProvider);

@@ -3,11 +3,11 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
-<ul class="navbar-nav mb-0 d-flex align-items-center gap-2">
+<ul class="navbar-nav flex-row mb-0 d-flex align-items-center gap-2">
     @if (SignInManager.IsSignedIn(User))
     {
         <li class="nav-item">
-            <a class="nav-link text-secondary fw-semibold"
+            <a class="nav-link text-secondary fw-semibold me-2"
                asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">
                 Hello, @User.Identity?.Name
             </a>

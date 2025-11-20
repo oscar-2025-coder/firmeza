@@ -1,9 +1,53 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model Firmeza.Admin.Models.DashboardMetricsViewModel
+@{
+    ViewData["Title"] = "Inicio";
+    // CAMBIO: Usamos el layout nuevo sin sidebar
+    Layout = "~/Views/Shared/_HomeLayout.cshtml"; 
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="text-center mb-5">
+    <h1 class="display-5 fw-bold">Bienvenido a Firmeza</h1>
+    <p class="lead text-muted">Sistema de Gestión Administrativa</p>
 </div>
 
+<div class="row g-3">
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <div class="fs-1 mb-2">📦</div>
+                <div class="fw-semibold text-primary">Productos</div>
+                <div class="display-6">@Model.TotalProducts</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <div class="fs-1 mb-2">👥</div>
+                <div class="fw-semibold text-primary">Clientes</div>
+                <div class="display-6">@Model.TotalCustomers</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <div class="fs-1 mb-2">🧾</div>
+                <div class="fw-semibold text-primary">Ventas</div>
+                <div class="display-6">@Model.TotalSales</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <div class="fs-1 mb-2">💰</div>
+                <div class="fw-semibold text-primary">Ingresos</div>
+                <div class="display-6">@Model.RevenueLast30Days.ToString("C")</div>
+            </div>
+        </div>
+    </div>
+</div>

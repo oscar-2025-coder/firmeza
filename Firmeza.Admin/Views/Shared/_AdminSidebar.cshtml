@@ -1,60 +1,120 @@
 @{
-    var current = (string)ViewContext.RouteData.Values["Controller"]!;
+    // Lógica para resaltar el menú activo
+    var current = (string?)ViewContext.RouteData.Values["controller"] ?? string.Empty;
+    
+    string GetActiveStyle(string controllerName)
+    {
+        return current == controllerName 
+            ? "background-color: #d35400; color: white; font-weight: bold;" // Activo: Naranja
+            : "color: rgba(255,255,255,0.8);"; // Inactivo: Blanco suave
+    }
+
+    // Obtenemos el nombre del usuario o usamos "User" si es nulo
+    var userName = User.Identity?.Name ?? "User";
+    var initial = !string.IsNullOrEmpty(userName) ? userName.Substring(0, 1).ToUpper() : "U";
 }
-<div class="p-3">
-    <h5 class="mb-4 fw-semibold text-white">Firmeza Admin</h5>
-    <ul class="nav nav-pills flex-column gap-1">
+
+<style>
+    /* Estilos personalizados para el dropdown de perfil */
+    .dropdown-menu-dark.profile-dropdown {
+        background-color: var(--primary-dark); /* Color más oscuro para el menú */
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4); /* Sombra más profunda */
+        transform: translateY(-10px); /* Inicia un poco más arriba */
+        opacity: 0;
+        transition: transform 0.2s ease-out, opacity 0.2s ease-out; /* Animación de entrada */
+        padding: 0.5rem 0;
+    }
+    .dropdown-menu-dark.profile-dropdown.show {
+        transform: translateY(0); /* Vuelve a su posición */
+        opacity: 1;
+    }
+    .profile-dropdown .dropdown-item {
+        color: rgba(255,255,255,0.85); /* Texto más claro */
+        padding: 0.75rem 1.25rem;
+        transition: background-color 0.2s;
+    }
+    .profile-dropdown .dropdown-item:hover {
+        background-color: rgba(255,255,255,0.1); /* Fondo claro al pasar el mouse */
+        color: white;
+    }
+</style>
+
+<div class="d-flex flex-column flex-shrink-0 p-3 text-white" 
+     style="width: 260px; min-height: 100vh; background-color: #2c3e50;">
+    
+    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+        <span class="fs-4 fw-bold">🏗️ Firmeza</span>
+    </a>
+    
+    <hr>
+    
+    <ul class="nav nav-pills flex-column mb-auto gap-2">
+        
         <li class="nav-item">
-            <a class="nav-link d-flex align-items-center gap-2 @(current == "Admin" ? "active" : "text-white-50")"
+            <a class="nav-link d-flex align-items-center gap-3"
+               style="@GetActiveStyle("Admin")"
                asp-controller="Admin" asp-action="Index">
-                🏠 <span>Dashboard</span>
+                <span class="fs-5">🏠</span> <span>Dashboard</span>
             </a>
         </li>
 
         <li class="nav-item">
-            <a class="nav-link d-flex align-items-center gap-2 @(current == "Products" ? "active" : "text-white-50")"
+            <a class="nav-link d-flex align-items-center gap-3"
+               style="@GetActiveStyle("Products")"
                asp-controller="Products" asp-action="Index">
-                📦 <span>Products</span>
+                <span class="fs-5">📦</span> <span>Products</span>
             </a>
         </li>
 
         <li class="nav-item">
-            <a class="nav-link d-flex align-items-center gap-2 @(current == "Customers" ? "active" : "text-white-50")"
+            <a class="nav-link d-flex align-items-center gap-3"
+               style="@GetActiveStyle("Customers")"
                asp-controller="Customers" asp-action="Index">
-                👥 <span>Customers</span>
+                <span class="fs-5">👥</span> <span>Customers</span>
             </a>
         </li>
 
         <li class="nav-item">
-            <a class="nav-link d-flex align-items-center gap-2 @(current == "Sales" ? "active" : "text-white-50")"
+            <a class="nav-link d-flex align-items-center gap-3"
+               style="@GetActiveStyle("Sales")"
                asp-controller="Sales" asp-action="Index">
-                💵 <span>Sales</span>
+                <span class="fs-5">💵</span> <span>Sales</span>
             </a>
         </li>
-
-        <!-- 👉 Nueva opción para la Task 8: carga masiva desde Excel -->
+        
         <li class="nav-item">
-            <a class="nav-link d-flex align-items-center gap-2 @(current == "DataImport" ? "active" : "text-white-50")"
+            <a class="nav-link d-flex align-items-center gap-3"
+               style="@GetActiveStyle("DataImport")"
                asp-controller="DataImport" asp-action="BulkImport">
-                📥 <span>Bulk Import</span>
+                <span class="fs-5">📥</span> <span>Bulk Import</span>
             </a>
         </li>
     </ul>
+    
+    <hr>
+    
+    <div class="dropdown">
+        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="rounded-circle bg-white text-dark d-flex justify-content-center align-items-center me-2 shadow-sm" 
+                 style="width: 32px; height: 32px; font-weight: bold;">
+                @initial
+            </div>
+            <strong class="text-truncate" style="max-width: 150px;">@userName</strong>
+        </a>
+        
+        <ul class="dropdown-menu dropdown-menu-dark text-small shadow profile-dropdown" aria-labelledby="dropdownUser1">
+            <li>
+                <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                    <button type="submit" class="dropdown-item d-flex align-items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
+                          <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
+                          <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+                        </svg>
+                        Sign out
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </div>
 </div>
-
-<style>
-    .nav-pills .nav-link {
-        border-radius: .5rem;
-        transition: all .2s ease;
-    }
-
-    .nav-pills .nav-link.active {
-        background: #0d6efd;
-        color: #fff !important;
-        font-weight: 600;
-    }
-
-    .bg-dark .nav-link.text-white-50:hover {
-        color: #fff !important;
-    }
-</style>

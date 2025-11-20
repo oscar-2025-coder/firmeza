@@ -1,0 +1,107 @@
+﻿@page
+@model LoginModel
+
+@{
+    ViewData["Title"] = "Log in";
+    Layout = "~/Views/Shared/_HomeLayout.cshtml";
+}
+
+<style>
+    .login-card {
+        min-height: 600px;
+        overflow: hidden;
+    }
+    .bg-login-image {
+        background-image: url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1000&auto=format&fit=crop'); /* Imagen de construcción moderna */
+        background-size: cover;
+        background-position: center;
+    }
+    .login-form-section {
+        background-color: #ffffff;
+    }
+    .form-floating > .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(var(--primary-color-rgb), 0.25);
+    }
+    .btn-modern {
+        background-color: var(--primary-color);
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .btn-modern:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+</style>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-xl-10 col-lg-12 col-md-9">
+            
+            <div class="card shadow-lg border-0 rounded-4 login-card">
+                <div class="row g-0 h-100">
+                    
+                    <div class="col-lg-6 d-none d-lg-block bg-login-image position-relative">
+                        <div class="position-absolute top-0 start-0 w-100 h-100" style="background: rgba(0,0,0,0.3);"></div>
+                        <div class="position-absolute bottom-0 start-0 p-5 text-white">
+                            <h2 class="fw-bold">Welcome Back!</h2>
+                            <p class="lead mb-0">Building the future with solid foundations.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6 d-flex align-items-center login-form-section">
+                        <div class="card-body p-4 p-lg-5 text-black">
+
+                            <div class="d-flex align-items-center mb-4 pb-1">
+                                <span class="h2 fw-bold mb-0" style="color: var(--primary-color);">🏗️ Firmeza Admin</span>
+                            </div>
+
+                            <h5 class="fw-normal mb-3 pb-3" style="letter-spacing: 1px;">Sign into your account</h5>
+
+                            <form id="account" method="post">
+                                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3" role="alert"></div>
+
+                                <div class="form-floating mb-3">
+                                    <input asp-for="Input.Email" class="form-control form-control-lg rounded-3" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                                    <label asp-for="Input.Email" class="text-muted">Email address</label>
+                                    <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <input asp-for="Input.Password" class="form-control form-control-lg rounded-3" autocomplete="current-password" aria-required="true" placeholder="password" />
+                                    <label asp-for="Input.Password" class="text-muted">Password</label>
+                                    <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" asp-for="Input.RememberMe" />
+                                        <label class="form-check-label text-muted small" asp-for="Input.RememberMe">Remember me</label>
+                                    </div>
+                                    <a id="forgot-password" asp-page="./ForgotPassword" class="text-muted small text-decoration-none">Forgot password?</a>
+                                </div>
+
+                                <div class="pt-1 mb-4">
+                                    <button id="login-submit" type="submit" class="btn btn-modern btn-lg text-white w-100 rounded-3 py-3 fw-bold">
+                                        LOG IN
+                                    </button>
+                                </div>
+
+                                <p class="mb-5 pb-lg-2 text-muted small">
+                                    Don't have an account? 
+                                    <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="fw-bold text-decoration-none" style="color: var(--secondary-color);">Register here</a>
+                                </p>
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
