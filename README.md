@@ -94,6 +94,8 @@ Sales
 In-memory validation before saving.
 
 ## Project Structure
+
+``````
 Firmeza.Admin/
 │
 ├── Controllers/

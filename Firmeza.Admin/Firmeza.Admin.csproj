@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>Firmeza.admi</RootNamespace>
       <UserSecretsId>242c35f9-68f3-40d8-ad85-1ee0793ddd2b</UserSecretsId>
+      <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
     <ItemGroup>
@@ -68,6 +69,12 @@
 
     <ItemGroup>
       <Folder Include="wwwroot\receipts\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
     </ItemGroup>
 
 </Project>
