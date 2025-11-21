@@ -26,14 +26,11 @@ namespace Firmeza.Admin.ViewModels.Customers
         [Display(Name = "Phone number")]
         public string? PhoneNumber { get; set; }
 
-        // Age provided as text (to test int.Parse with try-catch)
         [Display(Name = "Age")]
         public string? AgeText { get; set; }
 
-        // Parsed age if conversion succeeds
         public int? Age { get; set; }
 
-        // Friendly error message for invalid input
         public string? ErrorMessage { get; set; }
     }
 }

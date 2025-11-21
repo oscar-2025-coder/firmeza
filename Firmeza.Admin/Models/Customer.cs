@@ -1,5 +1,12 @@
+using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+
 namespace Firmeza.Admin.Models
 {
+    [Index(nameof(DocumentNumber), IsUnique = true)]
+    [Index(nameof(Email), IsUnique = true)]
+    [Index(nameof(PhoneNumber), IsUnique = true)]
     public class Customer
     {
         public Guid Id { get; set; }

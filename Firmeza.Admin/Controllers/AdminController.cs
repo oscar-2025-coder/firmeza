@@ -19,16 +19,26 @@ namespace Firmeza.Admin.Controllers
         // GET: /Admin/Index
         public async Task<IActionResult> Index()
         {
+            // --- Conteos ---
+            int totalProducts = await _db.Products.CountAsync();
+            int totalCustomers = await _db.Customers.CountAsync();
+            int totalSales = await _db.Sales.CountAsync();
+
+            // --- Ventas últimos 30 días ---
+            var last30days = await _db.Sales
+                .Where(s => s.Date >= DateTimeOffset.UtcNow.AddDays(-30))
+                .ToListAsync();
+
+            // Calcular correctamente ingresos: Subtotal + Tax
+            decimal revenueLast30Days = last30days.Sum(s => s.Subtotal + s.Tax);
+
+            // Crear VM
             var viewModel = new DashboardMetricsViewModel
             {
-                TotalProducts = await _db.Products.CountAsync(),
-                TotalCustomers = await _db.Customers.CountAsync(),
-                TotalSales = await _db.Sales.CountAsync(),
-
-                // Revenue from last 30 days
-                RevenueLast30Days = await _db.Sales
-                    .Where(s => s.Date >= DateTimeOffset.UtcNow.AddDays(-30))
-                    .SumAsync(s => (decimal?)s.Total) ?? 0m
+                TotalProducts = totalProducts,
+                TotalCustomers = totalCustomers,
+                TotalSales = totalSales,
+                RevenueLast30Days = revenueLast30Days
             };
 
             return View(viewModel);

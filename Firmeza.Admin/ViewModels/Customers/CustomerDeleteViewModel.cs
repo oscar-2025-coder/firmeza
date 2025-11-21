@@ -1,11 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
-namespace Firmeza.Admin.ViewModels.Customers;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
-public class CustomerDeleteViewModel
+namespace Firmeza.Admin.ViewModels.Customers
 {
-    [Required]
-    public Guid Id { get; set; }
+    public class CustomerDeleteViewModel
+    {
+        [Required]
+        public Guid Id { get; set; }
 
-    [Display(Name = "Full name")]
-    public string? FullName { get; set; }
+        [Display(Name = "Full name")]
+        public string FullName { get; set; } = string.Empty;
+
+        // 🔥 Necesaria para evitar errores y mostrar advertencia en la vista
+        public bool HasRelatedSales { get; set; }
+    }
 }

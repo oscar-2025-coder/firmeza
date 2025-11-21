@@ -173,7 +173,7 @@ namespace Firmeza.Admin.Controllers
         }
 
         // ============================================================
-        // DELETE
+        // DELETE (SOFT DELETE CORREGIDO)
         // ============================================================
         [HttpGet]
         public async Task<IActionResult> Delete(Guid id)
@@ -201,6 +201,22 @@ namespace Firmeza.Admin.Controllers
             if (product == null)
                 return NotFound();
 
+            // 🔥 Check if product is used in sales (foreign key protection)
+            bool hasSales = await _db.SaleItems.AnyAsync(s => s.ProductId == id);
+
+            if (hasSales)
+            {
+                // Soft Delete → Just deactivate
+                product.IsActive = false;
+                await _db.SaveChangesAsync();
+
+                TempData["ErrorMessage"] =
+                    "⚠️ This product cannot be deleted because it has sales associated. It was deactivated instead.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Safe to delete
             _db.Products.Remove(product);
             await _db.SaveChangesAsync();
 

@@ -2,85 +2,158 @@
 
 @{
     ViewData["Title"] = "Create Sale";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<h1>Create Sale</h1>
+<div class="container-fluid px-4 mt-4">
 
-<form asp-action="Create" method="post">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-    <!-- Customer selection -->
-    <div class="mb-3">
-        <label asp-for="CustomerId" class="form-label"></label>
-        <select asp-for="CustomerId" asp-items="Model.Customers" class="form-select">
-            <option value="">-- Select customer --</option>
-        </select>
-        <span asp-validation-for="CustomerId" class="text-danger"></span>
+    <!-- TÍTULO -->
+    <div class="d-flex align-items-center mb-4">
+        <h2 class="fw-bold text-dark me-3">
+            🧾 Create New Sale
+        </h2>
     </div>
 
-    <!-- Notes -->
-    <div class="mb-3">
-        <label asp-for="Notes" class="form-label"></label>
-        <textarea asp-for="Notes" class="form-control"></textarea>
-        <span asp-validation-for="Notes" class="text-danger"></span>
-    </div>
+    <form asp-action="Create" method="post" class="shadow-sm p-4 bg-white rounded-3">
 
-    <h4>Items</h4>
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th style="width: 40%;">Product</th>
-                <th style="width: 20%;">Quantity</th>
-                <th style="width: 20%;">Unit Price</th>
-                <th style="width: 20%;">Line Total</th>
-            </tr>
-        </thead>
-        <tbody>
-        @for (int i = 0; i < Model.Items.Count; i++)
-        {
-            <tr>
-                <td>
-                    <select asp-for="Items[i].ProductId"
-                            asp-items="Model.Products"
-                            class="form-select">
-                        <option value="">-- Select product --</option>
+        <!-- =======================
+             CUSTOMER INFORMATION
+        ======================== -->
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-primary text-white fw-bold">
+                Customer Information
+            </div>
+
+            <div class="card-body">
+
+                <!-- Customer -->
+                <div class="mb-3">
+                    <label asp-for="CustomerId" class="form-label fw-bold"></label>
+                    <select asp-for="CustomerId" asp-items="Model.Customers" class="form-select form-select-lg">
+                        <option value="">-- Select customer --</option>
                     </select>
-                    <span asp-validation-for="Items[i].ProductId" class="text-danger"></span>
-                </td>
-                <td>
-                    <input asp-for="Items[i].Quantity" class="form-control" />
-                    <span asp-validation-for="Items[i].Quantity" class="text-danger"></span>
-                </td>
-                <td>
-                    <input asp-for="Items[i].UnitPrice" class="form-control" />
-                    <span asp-validation-for="Items[i].UnitPrice" class="text-danger"></span>
-                </td>
-                <td>
-                    @(Model.Items[i].Quantity * Model.Items[i].UnitPrice)
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
+                    <span asp-validation-for="CustomerId" class="text-danger"></span>
+                </div>
 
-    <!-- Totals (read-only, real calculation is done on the server) -->
-    <div class="mb-3">
-        <label class="form-label">Subtotal</label>
-        <input class="form-control" value="@Model.Subtotal" readonly />
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Tax</label>
-        <input class="form-control" value="@Model.Tax" readonly />
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Total</label>
-        <input class="form-control" value="@Model.Total" readonly />
-    </div>
+                <!-- Notes -->
+                <div class="mb-3">
+                    <label asp-for="Notes" class="form-label fw-bold"></label>
+                    <textarea asp-for="Notes" class="form-control form-control-lg" placeholder="Enter notes for this sale..."></textarea>
+                    <span asp-validation-for="Notes" class="text-danger"></span>
+                </div>
 
-    <button type="submit" class="btn btn-primary">Save and Generate Receipt</button>
-    <a asp-action="Index" class="btn btn-secondary">Back to list</a>
-</form>
+            </div>
+        </div>
+
+        <!-- =======================
+             SALE ITEMS TABLE
+        ======================== -->
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-dark text-white fw-bold">
+                Sale Items
+            </div>
+
+            <div class="card-body p-0">
+
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 40%;">Product</th>
+                            <th style="width: 20%;">Quantity</th>
+                            <th style="width: 20%;">Unit Price</th>
+                            <th style="width: 20%;">Line Total</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @for (int i = 0; i < Model.Items.Count; i++)
+                        {
+                            <tr>
+                                <!-- Product -->
+                                <td>
+                                    <select asp-for="Items[i].ProductId" 
+                                            asp-items="Model.Products" 
+                                            class="form-select">
+                                        <option value="">-- Select product --</option>
+                                    </select>
+                                    <span asp-validation-for="Items[i].ProductId" class="text-danger small"></span>
+                                </td>
+
+                                <!-- Quantity -->
+                                <td>
+                                    <input asp-for="Items[i].Quantity" class="form-control text-center" />
+                                    <span asp-validation-for="Items[i].Quantity" class="text-danger small"></span>
+                                </td>
+
+                                <!-- Unit Price -->
+                                <td>
+                                    <input asp-for="Items[i].UnitPrice" class="form-control text-end" />
+                                    <span asp-validation-for="Items[i].UnitPrice" class="text-danger small"></span>
+                                </td>
+
+                                <!-- Line Total -->
+                                <td class="text-end fw-bold">
+                                    @(Model.Items[i].Quantity * Model.Items[i].UnitPrice)
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+
+        <!-- =======================
+             TOTALS SUMMARY
+        ======================== -->
+        <div class="row g-4 mb-4">
+
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body text-center">
+                        <h6 class="fw-bold text-uppercase text-muted">Subtotal</h6>
+                        <input class="form-control text-center fw-bold fs-5" value="@Model.Subtotal" readonly />
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body text-center">
+                        <h6 class="fw-bold text-uppercase text-muted">Tax</h6>
+                        <input class="form-control text-center fw-bold fs-5" value="@Model.Tax" readonly />
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body text-center">
+                        <h6 class="fw-bold text-uppercase text-muted">Total</h6>
+                        <input class="form-control text-center fw-bold fs-4" value="@Model.Total" readonly />
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="d-flex justify-content-end mt-4">
+
+            <button type="submit" class="btn btn-success btn-lg fw-bold shadow-sm me-2">
+                💾 Save & Generate Receipt
+            </button>
+
+            <a asp-action="Index" class="btn btn-outline-secondary btn-lg fw-bold">
+                ⬅ Back to list
+            </a>
+
+        </div>
+
+    </form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

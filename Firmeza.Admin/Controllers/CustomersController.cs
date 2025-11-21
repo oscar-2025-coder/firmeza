@@ -1,123 +1,17 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Firmeza.Admin.Data;
-using Firmeza.Admin.Models;
-using Firmeza.Admin.ViewModels.Customers;
-using OfficeOpenXml; // EPPlus para Excel
+using OfficeOpenXml;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
+using Firmeza.Admin.Data;
+using Firmeza.Admin.Models;
+using Firmeza.Admin.ViewModels.Customers;
+
 namespace Firmeza.Admin.Controllers
 {
-    public class CustomerReportItem
-    {
-        public string FullName { get; set; } = string.Empty;
-        public string DocumentNumber { get; set; } = string.Empty;
-        public string? Email { get; set; }
-        public string? PhoneNumber { get; set; }
-        public int Age { get; set; }
-        public bool IsActive { get; set; }
-    }
-
-    public class CustomersReportDocument : IDocument
-    {
-        public IList<CustomerReportItem> Customers { get; }
-
-        public CustomersReportDocument(IList<CustomerReportItem> customers)
-        {
-            Customers = customers;
-        }
-
-        public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
-
-        public DocumentSettings GetSettings() => DocumentSettings.Default;
-
-        public void Compose(IDocumentContainer container)
-        {
-            container.Page(page =>
-            {
-                page.Size(PageSizes.A4);
-                page.Margin(30);
-
-                page.Header()
-                    .Text("Customers Report")
-                    .SemiBold()
-                    .FontSize(20)
-                    .AlignCenter();
-
-                page.Content().Column(column =>
-                {
-                    column.Spacing(10);
-
-                    column.Item().Text($"Generated at: {DateTime.Now:yyyy-MM-dd HH:mm}");
-
-                    column.Item().Table(table =>
-                    {
-                        table.ColumnsDefinition(columns =>
-                        {
-                            columns.RelativeColumn(3); // Full Name
-                            columns.RelativeColumn(2); // Document
-                            columns.RelativeColumn(3); // Email
-                            columns.RelativeColumn(2); // Phone
-                            columns.RelativeColumn(1); // Age
-                            columns.RelativeColumn(1); // Active
-                        });
-
-                        table.Header(header =>
-                        {
-                            header.Cell().Element(HeaderCellStyle).Text("Full Name");
-                            header.Cell().Element(HeaderCellStyle).Text("Document");
-                            header.Cell().Element(HeaderCellStyle).Text("Email");
-                            header.Cell().Element(HeaderCellStyle).Text("Phone");
-                            header.Cell().Element(HeaderCellStyle).Text("Age");
-                            header.Cell().Element(HeaderCellStyle).Text("Active");
-                        });
-
-                        foreach (var customer in Customers)
-                        {
-                            table.Cell().Element(CellStyle).Text(customer.FullName);
-                            table.Cell().Element(CellStyle).Text(customer.DocumentNumber);
-                            table.Cell().Element(CellStyle).Text(customer.Email ?? string.Empty);
-                            table.Cell().Element(CellStyle).Text(customer.PhoneNumber ?? string.Empty);
-                            table.Cell().Element(CellStyle).Text(customer.Age.ToString());
-                            table.Cell().Element(CellStyle).Text(customer.IsActive ? "Yes" : "No");
-                        }
-
-                        static IContainer HeaderCellStyle(IContainer container)
-                        {
-                            return container
-                                .PaddingVertical(5)
-                                .DefaultTextStyle(x => x.SemiBold())
-                                .BorderBottom(1);
-                        }
-
-                        static IContainer CellStyle(IContainer container)
-                        {
-                            return container
-                                .PaddingVertical(5)
-                                .BorderBottom(0.5f);
-                        }
-                    });
-                });
-
-                page.Footer()
-                    .AlignCenter()
-                    .Text(text =>
-                    {
-                        text.CurrentPageNumber();
-                        text.Span(" / ");
-                        text.TotalPages();
-                    });
-            });
-        }
-    }
-
     [Authorize(Roles = "Administrator,Administrador")]
     public class CustomersController : Controller
     {
@@ -128,10 +22,14 @@ namespace Firmeza.Admin.Controllers
             _context = context;
         }
 
-        // GET: /Customers
+        // -----------------------------------------------------
+        // INDEX
+        // -----------------------------------------------------
         public async Task<IActionResult> Index()
         {
             var customers = await _context.Customers
+                .AsNoTracking()
+                .OrderBy(c => c.FullName)
                 .Select(c => new CustomerListItemViewModel
                 {
                     Id = c.Id,
@@ -145,54 +43,50 @@ namespace Firmeza.Admin.Controllers
             return View(customers);
         }
 
-        // GET: /Customers/Create
+        // -----------------------------------------------------
+        // CREATE GET
+        // -----------------------------------------------------
         public IActionResult Create()
         {
-            var model = new CustomerCreateViewModel();
-            return View(model);
+            return View(new CustomerCreateViewModel());
         }
 
-        // POST: /Customers/Create
+        // -----------------------------------------------------
+        // CREATE POST
+        // -----------------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CustomerCreateViewModel model)
+        public async Task<IActionResult> Create(CustomerCreateViewModel vm)
         {
             if (!ModelState.IsValid)
+                return View(vm);
+
+            if (!int.TryParse(vm.AgeText, out var parsedAge))
             {
-                return View(model);
+                vm.ErrorMessage = "Age must be a valid number.";
+                return View(vm);
             }
 
-            try
+            if (await _context.Customers.AnyAsync(c => c.DocumentNumber == vm.DocumentNumber))
             {
-                if (!string.IsNullOrWhiteSpace(model.AgeText))
-                {
-                    model.Age = int.Parse(model.AgeText);
-                }
-                else
-                {
-                    model.ErrorMessage = "Age is required and must be an integer.";
-                    return View(model);
-                }
+                vm.ErrorMessage = "Document number is already registered.";
+                return View(vm);
             }
-            catch (FormatException)
+
+            if (await _context.Customers.AnyAsync(c => c.Email == vm.Email))
             {
-                model.ErrorMessage = "Age must be a valid integer number.";
-                return View(model);
-            }
-            catch (OverflowException)
-            {
-                model.ErrorMessage = "Age number is too large.";
-                return View(model);
+                vm.ErrorMessage = "Email is already registered.";
+                return View(vm);
             }
 
             var customer = new Customer
             {
                 Id = Guid.NewGuid(),
-                FullName = model.FullName!,
-                DocumentNumber = model.DocumentNumber!,
-                Email = model.Email!,
-                PhoneNumber = model.PhoneNumber!,
-                Age = model.Age!.Value,
+                FullName = vm.FullName!,
+                DocumentNumber = vm.DocumentNumber!,
+                Email = vm.Email!,
+                PhoneNumber = vm.PhoneNumber!,
+                Age = parsedAge,
                 IsActive = true
             };
 
@@ -200,22 +94,19 @@ namespace Firmeza.Admin.Controllers
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Customer created successfully.";
-
-            // ✅ ÚNICA CORRECCIÓN SOLICITADA: Redirigir a Index en lugar de Create
-            return RedirectToAction(nameof(Index)); 
+            return RedirectToAction(nameof(Index));
         }
 
-        // GET: /Customers/Edit/{id}
+        // -----------------------------------------------------
+        // EDIT GET
+        // -----------------------------------------------------
         public async Task<IActionResult> Edit(Guid id)
         {
             var customer = await _context.Customers.FindAsync(id);
-
             if (customer == null)
-            {
-                return NotFound();
-            }
+                return RedirectToAction(nameof(Index));
 
-            var model = new CustomerEditViewModel
+            return View(new CustomerEditViewModel
             {
                 Id = customer.Id,
                 FullName = customer.FullName,
@@ -224,136 +115,121 @@ namespace Firmeza.Admin.Controllers
                 PhoneNumber = customer.PhoneNumber,
                 Age = customer.Age,
                 IsActive = customer.IsActive
-            };
-
-            return View(model);
+            });
         }
 
-        // POST: /Customers/Edit
+        // -----------------------------------------------------
+        // EDIT POST
+        // -----------------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(CustomerEditViewModel model)
+        public async Task<IActionResult> Edit(CustomerEditViewModel vm)
         {
             if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
+                return View(vm);
 
-            var customer = await _context.Customers.FindAsync(model.Id);
-
+            var customer = await _context.Customers.FindAsync(vm.Id);
             if (customer == null)
-            {
-                return NotFound();
-            }
+                return RedirectToAction(nameof(Index));
 
-            customer.FullName = model.FullName!;
-            customer.DocumentNumber = model.DocumentNumber!;
-            customer.Email = model.Email!;
-            customer.PhoneNumber = model.PhoneNumber!;
-            customer.Age = model.Age;
-            customer.IsActive = model.IsActive;
+            customer.FullName = vm.FullName!;
+            customer.DocumentNumber = vm.DocumentNumber!;
+            customer.Email = vm.Email!;
+            customer.PhoneNumber = vm.PhoneNumber!;
+            customer.Age = vm.Age;
+            customer.IsActive = vm.IsActive;
 
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Customer updated successfully.";
-
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /Customers/Delete/{id}
+        // -----------------------------------------------------
+        // DELETE GET
+        // -----------------------------------------------------
         public async Task<IActionResult> Delete(Guid id)
         {
             var customer = await _context.Customers.FindAsync(id);
-
             if (customer == null)
-            {
-                return NotFound();
-            }
+                return RedirectToAction(nameof(Index));
 
-            var model = new CustomerDeleteViewModel
+            bool hasSales = await _context.Sales.AnyAsync(s => s.CustomerId == id);
+
+            return View(new CustomerDeleteViewModel
             {
                 Id = customer.Id,
-                FullName = customer.FullName
-            };
-
-            return View(model);
+                FullName = customer.FullName,
+                HasRelatedSales = hasSales
+            });
         }
 
-        // POST: /Customers/Delete
+        // -----------------------------------------------------
+        // DELETE POST
+        // -----------------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(CustomerDeleteViewModel model)
+        public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
-
-            var customer = await _context.Customers.FindAsync(model.Id);
-
+            var customer = await _context.Customers.FindAsync(id);
             if (customer == null)
+                return RedirectToAction(nameof(Index));
+
+            bool hasSales = await _context.Sales.AnyAsync(s => s.CustomerId == id);
+            if (hasSales)
             {
-                return NotFound();
+                TempData["ErrorMessage"] = "This customer has sales and cannot be deleted.";
+                return RedirectToAction(nameof(Index));
             }
 
             _context.Customers.Remove(customer);
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Customer deleted successfully.";
-
             return RedirectToAction(nameof(Index));
         }
 
-        // ===============================
-        // EXPORT TO EXCEL
-        // ===============================
+        // -----------------------------------------------------
+        // EXPORT EXCEL
+        // -----------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> ExportToExcel()
         {
-            var customers = await _context.Customers
-                .AsNoTracking()
-                .OrderBy(c => c.FullName)
-                .ToListAsync();
+            var customers = await _context.Customers.AsNoTracking().ToListAsync();
 
-            // EPPlus license context
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
             using var package = new ExcelPackage();
-            var worksheet = package.Workbook.Worksheets.Add("Customers");
+            var ws = package.Workbook.Worksheets.Add("Customers");
 
-            // Headers
-            worksheet.Cells[1, 1].Value = "Full Name";
-            worksheet.Cells[1, 2].Value = "Document";
-            worksheet.Cells[1, 3].Value = "Email";
-            worksheet.Cells[1, 4].Value = "Phone";
-            worksheet.Cells[1, 5].Value = "Age";
-            worksheet.Cells[1, 6].Value = "Active";
+            ws.Cells[1, 1].Value = "Full Name";
+            ws.Cells[1, 2].Value = "Document";
+            ws.Cells[1, 3].Value = "Email";
+            ws.Cells[1, 4].Value = "Phone";
+            ws.Cells[1, 5].Value = "Age";
+            ws.Cells[1, 6].Value = "Active";
 
-            // Data
-            var row = 2;
+            int row = 2;
             foreach (var c in customers)
             {
-                worksheet.Cells[row, 1].Value = c.FullName;
-                worksheet.Cells[row, 2].Value = c.DocumentNumber;
-                worksheet.Cells[row, 3].Value = c.Email;
-                worksheet.Cells[row, 4].Value = c.PhoneNumber;
-                worksheet.Cells[row, 5].Value = c.Age;
-                worksheet.Cells[row, 6].Value = c.IsActive ? "Yes" : "No";
+                ws.Cells[row, 1].Value = c.FullName;
+                ws.Cells[row, 2].Value = c.DocumentNumber;
+                ws.Cells[row, 3].Value = c.Email;
+                ws.Cells[row, 4].Value = c.PhoneNumber;
+                ws.Cells[row, 5].Value = c.Age;
+                ws.Cells[row, 6].Value = c.IsActive ? "Yes" : "No";
                 row++;
             }
 
-            var bytes = package.GetAsByteArray();
-
             return File(
-                bytes,
+                package.GetAsByteArray(),
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 "customers.xlsx"
             );
         }
 
-        // ===============================
-        // EXPORT TO PDF
-        // ===============================
+        // -----------------------------------------------------
+        // EXPORT PDF
+        // -----------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> ExportToPdf()
         {
@@ -362,24 +238,107 @@ namespace Firmeza.Admin.Controllers
                 .OrderBy(c => c.FullName)
                 .ToListAsync();
 
-            var items = customers
-                .Select(c => new CustomerReportItem
+            var items = customers.Select(c => new CustomerReportItem
+            {
+                FullName = c.FullName,
+                DocumentNumber = c.DocumentNumber,
+                Email = c.Email,
+                PhoneNumber = c.PhoneNumber,
+                Age = c.Age,
+                IsActive = c.IsActive
+            }).ToList();
+
+            var doc = new CustomersReportDocument(items);
+            var pdfBytes = doc.GeneratePdf();
+
+            return File(pdfBytes, "application/pdf",
+                $"customers-report-{DateTime.UtcNow:yyyyMMddHHmmss}.pdf");
+        }
+    }
+
+    // -----------------------------------------------------
+    // PDF DTO
+    // -----------------------------------------------------
+    public class CustomerReportItem
+    {
+        public string FullName { get; set; } = "";
+        public string DocumentNumber { get; set; } = "";
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
+        public int Age { get; set; }
+        public bool IsActive { get; set; }
+    }
+
+    // -----------------------------------------------------
+    // PDF DOCUMENT
+    // -----------------------------------------------------
+    public class CustomersReportDocument : IDocument
+    {
+        private readonly IList<CustomerReportItem> _customers;
+
+        public CustomersReportDocument(IList<CustomerReportItem> customers)
+        {
+            _customers = customers;
+        }
+
+        public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
+
+        public DocumentSettings GetSettings() => DocumentSettings.Default;
+
+        public void Compose(IDocumentContainer container)
+        {
+            container.Page(page =>
+            {
+                page.Margin(30);
+
+                page.Header()
+                    .Text("Customers Report")
+                    .FontSize(20)
+                    .SemiBold()
+                    .AlignCenter();
+
+                page.Content().Table(table =>
                 {
-                    FullName = c.FullName,
-                    DocumentNumber = c.DocumentNumber,
-                    Email = c.Email,
-                    PhoneNumber = c.PhoneNumber,
-                    Age = c.Age,
-                    IsActive = c.IsActive
-                })
-                .ToList();
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.RelativeColumn(3);
+                        columns.RelativeColumn(2);
+                        columns.RelativeColumn(3);
+                        columns.RelativeColumn(2);
+                        columns.RelativeColumn(1);
+                        columns.RelativeColumn(1);
+                    });
 
-            var document = new CustomersReportDocument(items);
+                    table.Header(header =>
+                    {
+                        header.Cell().Text("Full Name").SemiBold();
+                        header.Cell().Text("Document").SemiBold();
+                        header.Cell().Text("Email").SemiBold();
+                        header.Cell().Text("Phone").SemiBold();
+                        header.Cell().Text("Age").SemiBold();
+                        header.Cell().Text("Active").SemiBold();
+                    });
 
-            var pdfBytes = document.GeneratePdf();
-            var fileName = $"customers-report-{DateTime.UtcNow:yyyyMMddHHmmss}.pdf";
+                    foreach (var c in _customers)
+                    {
+                        table.Cell().Text(c.FullName);
+                        table.Cell().Text(c.DocumentNumber);
+                        table.Cell().Text(c.Email ?? "");
+                        table.Cell().Text(c.PhoneNumber ?? "");
+                        table.Cell().Text(c.Age);
+                        table.Cell().Text(c.IsActive ? "Yes" : "No");
+                    }
+                });
 
-            return File(pdfBytes, "application/pdf", fileName);
+                page.Footer()
+                    .AlignCenter()
+                    .Text(x =>
+                    {
+                        x.CurrentPageNumber();
+                        x.Span(" / ");
+                        x.TotalPages();
+                    });
+            });
         }
     }
 }
