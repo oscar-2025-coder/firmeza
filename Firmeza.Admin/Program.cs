@@ -5,6 +5,7 @@ using Firmeza.Admin.Services.Pdf;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Infrastructure;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +15,15 @@ QuestPDF.Settings.License = LicenseType.Community;
 // 2. Cargar Variables de Entorno
 Env.Load("../.env");
 
-// 3. Conexión a Base de Datos (Solo una vez)
+// 3. Configurar Cultura (ARREGLA EL ERROR DE LA COMA)
+var culture = new CultureInfo("es-CO");
+culture.NumberFormat.NumberDecimalSeparator = ",";
+culture.NumberFormat.NumberGroupSeparator = ".";
+
+CultureInfo.DefaultThreadCurrentCulture = culture;
+CultureInfo.DefaultThreadCurrentUICulture = culture;
+
+// 4. Conexión a Base de Datos
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION")
                        ?? builder.Configuration.GetConnectionString("ApplicationDbContextConnection")
                        ?? throw new InvalidOperationException("Connection string not found.");
@@ -22,7 +31,7 @@ var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION")
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// 4. Configuración de Identity (SOLO UNA VEZ y con UI activada)
+// 5. Configuración de Identity
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
@@ -32,23 +41,23 @@ builder.Services
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders()
-    .AddDefaultUI(); // <--- Esto arregla el Login/Register
+    .AddDefaultUI();
 
-// 5. Cookies
+// 6. Cookies
 builder.Services.ConfigureApplicationCookie(opt =>
 {
     opt.LoginPath = "/Identity/Account/Login";
     opt.AccessDeniedPath = "/Identity/Account/AccessDenied";
 });
 
-// 6. Servicios MVC y PDF
+// 7. MVC, Razor y PDF
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddTransient<ReceiptPdfService>();
 
 var app = builder.Build();
 
-// --- PIPELINE ---
+// ---- PIPELINE ----
 
 if (!app.Environment.IsDevelopment())
 {
@@ -82,10 +91,10 @@ app.Use(async (context, next) =>
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
 app.MapRazorPages();
 
-// 7. SEEDER (Semilla de Datos)
-// Tu código pide usar "IdentitySeeder". Vamos a crear ese archivo ahora.
+// 8. Seeder
 using (var scope = app.Services.CreateScope())
 {
     await Firmeza.Admin.Identity.IdentitySeeder.SeedAsync(scope.ServiceProvider);

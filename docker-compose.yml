@@ -1,0 +1,14 @@
+version: '3.9'
+
+services:
+
+  firmeza-admin:
+    build:
+      context: ./Firmeza.Admin
+      dockerfile: Dockerfile
+    container_name: firmeza-admin
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"        
+      DB_CONNECTION: ${DB_CONNECTION}
