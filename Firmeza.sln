@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Firmeza.Admin", "Firmeza.Ad
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Firmeza.Tests", "Firmeza.Tests\Firmeza.Tests.csproj", "{BD30FE58-C67C-430F-827C-AAEF5790DCEF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Firmeza.Api", "Firmeza.Api\Firmeza.Api.csproj", "{243BA33E-B946-481B-B517-869891602AA3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{BD30FE58-C67C-430F-827C-AAEF5790DCEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD30FE58-C67C-430F-827C-AAEF5790DCEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD30FE58-C67C-430F-827C-AAEF5790DCEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{243BA33E-B946-481B-B517-869891602AA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{243BA33E-B946-481B-B517-869891602AA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{243BA33E-B946-481B-B517-869891602AA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{243BA33E-B946-481B-B517-869891602AA3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
