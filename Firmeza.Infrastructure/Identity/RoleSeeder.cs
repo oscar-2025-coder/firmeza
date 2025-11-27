@@ -10,14 +10,18 @@ public static class RoleSeeder
     {
         var roleManager = serviceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
 
-        // Existing admin role is "Administrador" (from Firmeza.Admin)
-        string[] roles = { "Administrador", "Customer" };
+        // Required roles for the system
+        string[] roles = { "Administrador", "Cliente" };
 
         foreach (var roleName in roles)
         {
             if (!await roleManager.RoleExistsAsync(roleName))
             {
-                await roleManager.CreateAsync(new ApplicationRole { Name = roleName });
+                await roleManager.CreateAsync(new ApplicationRole 
+                { 
+                    Name = roleName,
+                    NormalizedName = roleName.ToUpper()
+                });
             }
         }
     }

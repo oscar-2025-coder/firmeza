@@ -1,6 +1,7 @@
 using DotNetEnv;
 using Firmeza.Infrastructure.Data;
 using Firmeza.Infrastructure.Identity;
+using Firmeza.Infrastructure.Services;   // 👈 IMPORTANTE: EmailService
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // -----------------------------------------------------------
-// Load .env (solution root)
+// Load .env
 // -----------------------------------------------------------
 Env.Load("../.env");
 
@@ -22,12 +23,6 @@ var dbConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
 var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY");
 var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
 var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
-
-// DEBUG PRINT
-Console.WriteLine("ENV VALUE (DB_CONNECTION): " + dbConnectionString);
-Console.WriteLine("JWT_KEY VALUE: " + jwtKey);
-Console.WriteLine("JWT_ISSUER VALUE: " + jwtIssuer);
-Console.WriteLine("JWT_AUDIENCE VALUE: " + jwtAudience);
 
 // -----------------------------------------------------------
 // DbContext
@@ -85,38 +80,42 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
+// -----------------------------------------------------------
+// Email Service (SMTP Gmail)
+// -----------------------------------------------------------
+builder.Services.AddScoped<IEmailService, EmailService>();   // 👈 REGISTRO OFICIAL
 
 // -----------------------------------------------------------
-// Swagger (WITH JWT SUPPORT)
+// Swagger + JWT
 // -----------------------------------------------------------
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Firmeza.Api", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Firmeza.Api",
+        Version = "v1"
+    });
 
-    // JWT AUTH in Swagger
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    var securitySchema = new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
+        Description = "Enter: **Bearer {your JWT token}**",
         In = ParameterLocation.Header,
-        Description = "Insert JWT token: Bearer {your token}"
-    });
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer", // lowercase required
+        BearerFormat = "JWT",
+        Reference = new OpenApiReference
+        {
+            Type = ReferenceType.SecurityScheme,
+            Id = "Bearer"
+        }
+    };
+
+    c.AddSecurityDefinition("Bearer", securitySchema);
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
+        { securitySchema, Array.Empty<string>() }
     });
 });
 
@@ -126,13 +125,14 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // -----------------------------------------------------------
-// Swagger UI
+// Swagger ENABLED ALWAYS
 // -----------------------------------------------------------
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    options.DisplayRequestDuration();
+    options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
+});
 
 // -----------------------------------------------------------
 // Pipeline
@@ -145,30 +145,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 // -----------------------------------------------------------
-// TEMP Weather
-// -----------------------------------------------------------
-app.MapGet("/weatherforecast", () =>
-{
-    var summaries = new[]
-    {
-        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy",
-        "Hot", "Sweltering", "Scorching"
-    };
-
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast(
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        )).ToArray();
-
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
-
-// -----------------------------------------------------------
-// Seed Roles
+// Seed Roles (Admin, Cliente)
 // -----------------------------------------------------------
 using (var scope = app.Services.CreateScope())
 {
@@ -176,9 +153,3 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
-
-// -----------------------------------------------------------
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
