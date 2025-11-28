@@ -2,8 +2,10 @@ using AutoMapper;
 using Firmeza.Admin.Models;
 using Firmeza.API.DTOs.Sales;
 using Firmeza.Infrastructure.Data;
+using Firmeza.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 namespace Firmeza.API.Controllers;
 
@@ -13,11 +15,13 @@ public class SalesController : ControllerBase
 {
     private readonly FirmezaDbContext _context;
     private readonly IMapper _mapper;
+    private readonly IEmailService _emailService;
 
-    public SalesController(FirmezaDbContext context, IMapper mapper)
+    public SalesController(FirmezaDbContext context, IMapper mapper, IEmailService emailService)
     {
         _context = context;
         _mapper = mapper;
+        _emailService = emailService;
     }
 
     // ---------------------------------------------------------
@@ -62,7 +66,8 @@ public class SalesController : ControllerBase
     public async Task<ActionResult<SaleDto>> Create(SaleCreateDto dto)
     {
         // Validate Customer
-        if (!await _context.Customers.AnyAsync(c => c.Id == dto.CustomerId))
+        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == dto.CustomerId);
+        if (customer == null)
             return BadRequest("Customer does not exist.");
 
         if (dto.Items == null || dto.Items.Count == 0)
@@ -114,12 +119,39 @@ public class SalesController : ControllerBase
         _context.Sales.Add(sale);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetById), new { id = sale.Id }, _mapper.Map<SaleDto>(sale));
+
+        // ---------------------------------------------------------
+        // SEND EMAIL CONFIRMATION TO CUSTOMER
+        // ---------------------------------------------------------
+        var saleDto = _mapper.Map<SaleDto>(sale);
+
+        var body = new StringBuilder();
+        body.Append($"<h2>Thank you for your purchase, {customer.FullName}!</h2>");
+        body.Append($"<p><strong>Sale ID:</strong> {sale.Id}</p>");
+        body.Append($"<p><strong>Date:</strong> {sale.Date.LocalDateTime}</p>");
+        body.Append("<h3>Items:</h3><ul>");
+
+        foreach (var item in saleDto.Items)
+        {
+            body.Append($"<li>{item.ProductName} - Qty: {item.Quantity} - ${item.Amount}</li>");
+        }
+
+        body.Append("</ul>");
+        body.Append($"<p><strong>Subtotal:</strong> ${sale.Subtotal}</p>");
+        body.Append($"<p><strong>Tax (19%):</strong> ${sale.Tax}</p>");
+        body.Append($"<p><strong>Total:</strong> ${sale.Total}</p>");
+
+        await _emailService.SendEmailAsync(
+            customer.Email,
+            "Purchase Confirmation - Firmeza",
+            body.ToString()
+        );
+
+        return CreatedAtAction(nameof(GetById), new { id = sale.Id }, saleDto);
     }
 
     // ---------------------------------------------------------
     // PUT: api/sales/{id}
-    // Only updates Notes + Status
     // ---------------------------------------------------------
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, SaleUpdateDto dto)
@@ -131,7 +163,6 @@ public class SalesController : ControllerBase
 
         sale.Notes = dto.Notes;
 
-        // Validate enum
         if (!Enum.TryParse<SaleStatus>(dto.Status, true, out var newStatus))
             return BadRequest("Invalid status value.");
 
