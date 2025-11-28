@@ -21,14 +21,14 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Firmeza.Admin\Firmeza.Admin.csproj" />
-      <ProjectReference Include="..\Firmeza.Infrastructure\Firmeza.Infrastructure.csproj" />
+        <!-- ❌ ESTA REFERENCIA SE QUITA: <ProjectReference Include="..\Firmeza.Admin\Firmeza.Admin.csproj" /> -->
+        <ProjectReference Include="..\Firmeza.Infrastructure\Firmeza.Infrastructure.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="..\.dockerignore">
-        <Link>.dockerignore</Link>
-      </Content>
+        <Content Include="..\.dockerignore">
+            <Link>.dockerignore</Link>
+        </Content>
     </ItemGroup>
 
 </Project>

@@ -1,7 +1,7 @@
 using AutoMapper;
-using Firmeza.Admin.Models;
 using Firmeza.API.DTOs.Products;
 using Firmeza.Infrastructure.Data;
+using Firmeza.Infrastructure.Entities; // ✅ ENTIDADES CORRECTAS
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,7 +35,6 @@ public class ProductsController : ControllerBase
 
     // ============================================================
     // GET api/products/search
-    // (Search + Filtering)
     // ============================================================
     [HttpGet("search")]
     public async Task<ActionResult<IEnumerable<ProductDto>>> Search(
@@ -48,7 +47,6 @@ public class ProductsController : ControllerBase
     {
         var products = _context.Products.AsQueryable();
 
-        // Text search by Name or SKU
         if (!string.IsNullOrWhiteSpace(query))
         {
             var text = query.ToLower();
@@ -57,21 +55,18 @@ public class ProductsController : ControllerBase
                 p.Sku.ToLower().Contains(text));
         }
 
-        // Price range filters
         if (minPrice.HasValue)
             products = products.Where(p => p.UnitPrice >= minPrice.Value);
 
         if (maxPrice.HasValue)
             products = products.Where(p => p.UnitPrice <= maxPrice.Value);
 
-        // Stock range filters
         if (minStock.HasValue)
             products = products.Where(p => p.Stock >= minStock.Value);
 
         if (maxStock.HasValue)
             products = products.Where(p => p.Stock <= maxStock.Value);
 
-        // Active / Inactive filter
         if (isActive.HasValue)
             products = products.Where(p => p.IsActive == isActive.Value);
 

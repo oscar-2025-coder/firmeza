@@ -1,24 +1,30 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
+﻿# Imagen base para producción (ASP.NET Core runtime)
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
 
+# Imagen para build (SDK)
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-# 👇 Corrección importante
-COPY Firmeza.Admin.csproj ./
-RUN dotnet restore "Firmeza.Admin.csproj"
+# 📌 Primero copiamos SOLO el .csproj del proyecto (evita errores de rutas)
+COPY Firmeza.Admin/Firmeza.Admin.csproj ./Firmeza.Admin/
 
+# Restauramos dependencias
+RUN dotnet restore "./Firmeza.Admin/Firmeza.Admin.csproj"
+
+# 📌 Ahora copiamos todo el código fuente completo
 COPY . .
-RUN dotnet build "Firmeza.Admin.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
+# Compilamos
+WORKDIR "/src/Firmeza.Admin"
+RUN dotnet build "Firmeza.Admin.csproj" -c Release -o /app/build
+
+# Publicamos
 FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "Firmeza.Admin.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "Firmeza.Admin.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
+# Imagen final (runtime)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .

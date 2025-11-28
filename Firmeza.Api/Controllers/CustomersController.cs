@@ -1,137 +1,137 @@
 using AutoMapper;
-using Firmeza.Admin.Models;
 using Firmeza.API.DTOs.Customers;
 using Firmeza.Infrastructure.Data;
+using Firmeza.Infrastructure.Entities;   // ✅ ENTIDADES CORRECTAS
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Firmeza.API.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class CustomersController : ControllerBase
+namespace Firmeza.API.Controllers
 {
-    private readonly FirmezaDbContext _context;
-    private readonly IMapper _mapper;
-
-    public CustomersController(FirmezaDbContext context, IMapper mapper)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class CustomersController : ControllerBase
     {
-        _context = context;
-        _mapper = mapper;
-    }
+        private readonly FirmezaDbContext _context;
+        private readonly IMapper _mapper;
 
-    // ---------------------------------------------------------
-    // GET: api/customers
-    // ---------------------------------------------------------
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<CustomerDto>>> GetAll()
-    {
-        var customers = await _context.Customers
-            .AsNoTracking()
-            .OrderBy(c => c.FullName)
-            .ToListAsync();
+        public CustomersController(FirmezaDbContext context, IMapper mapper)
+        {
+            _context = context;
+            _mapper = mapper;
+        }
 
-        return Ok(_mapper.Map<IEnumerable<CustomerDto>>(customers));
-    }
+        // ---------------------------------------------------------
+        // GET: api/customers
+        // ---------------------------------------------------------
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<CustomerDto>>> GetAll()
+        {
+            var customers = await _context.Customers
+                .AsNoTracking()
+                .OrderBy(c => c.FullName)
+                .ToListAsync();
 
-    // ---------------------------------------------------------
-    // GET: api/customers/{id}
-    // ---------------------------------------------------------
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<CustomerDto>> GetById(Guid id)
-    {
-        var customer = await _context.Customers
-            .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == id);
+            return Ok(_mapper.Map<IEnumerable<CustomerDto>>(customers));
+        }
 
-        if (customer == null)
-            return NotFound($"Customer with ID {id} was not found.");
+        // ---------------------------------------------------------
+        // GET: api/customers/{id}
+        // ---------------------------------------------------------
+        [HttpGet("{id:guid}")]
+        public async Task<ActionResult<CustomerDto>> GetById(Guid id)
+        {
+            var customer = await _context.Customers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == id);
 
-        return Ok(_mapper.Map<CustomerDto>(customer));
-    }
+            if (customer == null)
+                return NotFound($"Customer with ID {id} was not found.");
 
-    // ---------------------------------------------------------
-    // POST: api/customers
-    // ---------------------------------------------------------
-    [HttpPost]
-    public async Task<ActionResult<CustomerDto>> Create(CustomerCreateDto dto)
-    {
-        // VALIDACIÓN BÁSICA
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return Ok(_mapper.Map<CustomerDto>(customer));
+        }
 
-        // VALIDACIÓN DE UNICIDAD
-        if (await _context.Customers.AnyAsync(c => c.DocumentNumber == dto.DocumentNumber))
-            return Conflict("DocumentNumber already exists.");
+        // ---------------------------------------------------------
+        // POST: api/customers
+        // ---------------------------------------------------------
+        [HttpPost]
+        public async Task<ActionResult<CustomerDto>> Create(CustomerCreateDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-        if (await _context.Customers.AnyAsync(c => c.Email == dto.Email))
-            return Conflict("Email already exists.");
+            // VALIDACIONES ÚNICAS
+            if (await _context.Customers.AnyAsync(c => c.DocumentNumber == dto.DocumentNumber))
+                return Conflict("DocumentNumber already exists.");
 
-        if (await _context.Customers.AnyAsync(c => c.PhoneNumber == dto.PhoneNumber))
-            return Conflict("PhoneNumber already exists.");
+            if (await _context.Customers.AnyAsync(c => c.Email == dto.Email))
+                return Conflict("Email already exists.");
 
-        var customer = _mapper.Map<Customer>(dto);
+            if (await _context.Customers.AnyAsync(c => c.PhoneNumber == dto.PhoneNumber))
+                return Conflict("PhoneNumber already exists.");
 
-        _context.Customers.Add(customer);
-        await _context.SaveChangesAsync();
+            var customer = _mapper.Map<Customer>(dto);
 
-        var result = _mapper.Map<CustomerDto>(customer);
+            _context.Customers.Add(customer);
+            await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetById), new { id = customer.Id }, result);
-    }
+            var result = _mapper.Map<CustomerDto>(customer);
 
-    // ---------------------------------------------------------
-    // PUT: api/customers/{id}
-    // ---------------------------------------------------------
-    [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, CustomerUpdateDto dto)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return CreatedAtAction(nameof(GetById), new { id = customer.Id }, result);
+        }
 
-        var customer = await _context.Customers.FindAsync(id);
+        // ---------------------------------------------------------
+        // PUT: api/customers/{id}
+        // ---------------------------------------------------------
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> Update(Guid id, CustomerUpdateDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-        if (customer == null)
-            return NotFound($"Customer with ID {id} was not found.");
+            var customer = await _context.Customers.FindAsync(id);
 
-        // VALIDACIONES DE UNICIDAD EXCLUYENDO EL MISMO REGISTRO
-        if (await _context.Customers.AnyAsync(c =>
-                c.DocumentNumber == dto.DocumentNumber && c.Id != id))
-            return Conflict("DocumentNumber already exists.");
+            if (customer == null)
+                return NotFound($"Customer with ID {id} was not found.");
 
-        if (await _context.Customers.AnyAsync(c =>
-                c.Email == dto.Email && c.Id != id))
-            return Conflict("Email already exists.");
+            // VALIDACIONES ÚNICAS (excluyendo este mismo registro)
+            if (await _context.Customers.AnyAsync(c =>
+                    c.DocumentNumber == dto.DocumentNumber && c.Id != id))
+                return Conflict("DocumentNumber already exists.");
 
-        if (await _context.Customers.AnyAsync(c =>
-                c.PhoneNumber == dto.PhoneNumber && c.Id != id))
-            return Conflict("PhoneNumber already exists.");
+            if (await _context.Customers.AnyAsync(c =>
+                    c.Email == dto.Email && c.Id != id))
+                return Conflict("Email already exists.");
 
-        _mapper.Map(dto, customer);
+            if (await _context.Customers.AnyAsync(c =>
+                    c.PhoneNumber == dto.PhoneNumber && c.Id != id))
+                return Conflict("PhoneNumber already exists.");
 
-        await _context.SaveChangesAsync();
-        return NoContent();
-    }
+            _mapper.Map(dto, customer);
+            await _context.SaveChangesAsync();
 
-    // ---------------------------------------------------------
-    // DELETE: api/customers/{id}
-    // ---------------------------------------------------------
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id)
-    {
-        var customer = await _context.Customers.FindAsync(id);
+            return NoContent();
+        }
 
-        if (customer == null)
-            return NotFound($"Customer with ID {id} was not found.");
+        // ---------------------------------------------------------
+        // DELETE: api/customers/{id}
+        // ---------------------------------------------------------
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var customer = await _context.Customers.FindAsync(id);
 
-        // Protegemos para no borrar clientes con ventas
-        var hasSales = await _context.Sales.AnyAsync(s => s.CustomerId == id);
-        if (hasSales)
-            return Conflict("Customer has sales and cannot be deleted.");
+            if (customer == null)
+                return NotFound($"Customer with ID {id} was not found.");
 
-        _context.Customers.Remove(customer);
-        await _context.SaveChangesAsync();
+            // Impedir eliminar clientes con ventas
+            var hasSales = await _context.Sales.AnyAsync(s => s.CustomerId == id);
+            if (hasSales)
+                return Conflict("Customer has sales and cannot be deleted.");
 
-        return NoContent();
+            _context.Customers.Remove(customer);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }

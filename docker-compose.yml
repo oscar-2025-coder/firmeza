@@ -1,14 +1,38 @@
-version: '3.9'
-
 services:
 
+  # ========================================
+  #  FIRMEZA ADMIN (Razor / Panel)
+  # ========================================
   firmeza-admin:
     build:
-      context: ./Firmeza.Admin
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Firmeza.Admin/Dockerfile
     container_name: firmeza-admin
     ports:
       - "8080:8080"
     environment:
-      ASPNETCORE_ENVIRONMENT: "Development"        
+      ASPNETCORE_ENVIRONMENT: "Development"
       DB_CONNECTION: ${DB_CONNECTION}
+
+
+  # ========================================
+  #  FIRMEZA API (REST API)
+  # ========================================
+  firmeza-api:
+    build:
+      context: .
+      dockerfile: Firmeza.Api/Dockerfile
+    container_name: firmeza-api
+    ports:
+      - "8081:8080"   # Swagger: http://localhost:8081/swagger
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      DB_CONNECTION: ${DB_CONNECTION}
+      JWT_KEY: ${JWT_KEY}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_EMAIL: ${SMTP_EMAIL}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_ENABLE_SSL: ${SMTP_ENABLE_SSL}

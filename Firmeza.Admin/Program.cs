@@ -15,11 +15,10 @@ QuestPDF.Settings.License = LicenseType.Community;
 // 2. Cargar Variables de Entorno
 Env.Load("../.env");
 
-// 3. Configurar Cultura (ARREGLA EL ERROR DE LA COMA)
+// 3. Configurar Cultura
 var culture = new CultureInfo("es-CO");
 culture.NumberFormat.NumberDecimalSeparator = ",";
 culture.NumberFormat.NumberGroupSeparator = ".";
-
 CultureInfo.DefaultThreadCurrentCulture = culture;
 CultureInfo.DefaultThreadCurrentUICulture = culture;
 
@@ -94,10 +93,11 @@ app.MapControllerRoute(
 
 app.MapRazorPages();
 
-// 8. Seeder
-using (var scope = app.Services.CreateScope())
-{
-    await Firmeza.Admin.Identity.IdentitySeeder.SeedAsync(scope.ServiceProvider);
-}
+// 8. 🚫 DESACTIVADO EL SEEDER (ROMPE NEON)
+// NO USAR EN PRODUCCIÓN
+// using (var scope = app.Services.CreateScope())
+// {
+//     await Firmeza.Admin.Identity.IdentitySeeder.SeedAsync(scope.ServiceProvider);
+// }
 
 app.Run();

@@ -1,11 +1,10 @@
 using AutoMapper;
-using Firmeza.Admin.Models;
 using Firmeza.API.Controllers;
 using Firmeza.API.DTOs.Products;
 using Firmeza.Infrastructure.Data;
+using Firmeza.Infrastructure.Entities;        // ✅ ENTIDADES CORRECTAS
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Moq;
 using Xunit;
 
 namespace Firmeza.Tests.Products
