@@ -36,3 +36,17 @@ services:
       SMTP_EMAIL: ${SMTP_EMAIL}
       SMTP_PASSWORD: ${SMTP_PASSWORD}
       SMTP_ENABLE_SSL: ${SMTP_ENABLE_SSL}
+
+
+  # ========================================
+  #  FIRMEZA CLIENT (React Frontend)
+  # ========================================
+  firmeza-client:
+    build:
+      context: ./firmeza-client
+      dockerfile: Dockerfile
+    container_name: firmeza-client
+    ports:
+      - "3000:80"
+    depends_on:
+      - firmeza-api

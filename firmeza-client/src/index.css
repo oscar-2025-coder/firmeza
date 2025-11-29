@@ -1,0 +1,45 @@
+/* ------------------------------------------------------
+   TAILWIND PRE-FLIGHT RESET
+   (Mantén SIEMPRE estas 3 líneas al inicio)
+------------------------------------------------------- */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------
+   TEMA OSCURO GLOBAL
+   - No interfiere con Tailwind
+   - No rompe botones ni inputs
+------------------------------------------------------- */
+
+html, body {
+    background-color: #121212;
+    color: #ffffff;
+    font-family: system-ui, Arial, sans-serif;
+    min-height: 100vh;
+}
+
+/* ------------------------------------------------------
+   ESTILOS OPCIONALES COMPATIBLES
+   (NO sobrescriben clases Tailwind)
+------------------------------------------------------- */
+
+a {
+    @apply text-blue-400 hover:text-blue-300;
+}
+
+button {
+    @apply rounded-lg px-4 py-2 transition;
+}
+
+/* Modo claro */
+@media (prefers-color-scheme: light) {
+    html, body {
+        background-color: #ffffff;
+        color: #212121;
+    }
+
+    a {
+        @apply text-blue-600 hover:text-blue-500;
+    }
+}

@@ -106,9 +106,24 @@ builder.Services.AddControllers();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 // ============================================================
+// CORS (Allow Frontend)
+// ============================================================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+// ============================================================
 // Email Service (SMTP)
 // ============================================================
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IPdfService, PdfService>();
+
 
 // ============================================================
 // Swagger + JWT Support
@@ -164,6 +179,8 @@ app.UseSwaggerUI(options =>
 // ============================================================
 app.UseHttpsRedirection();
 
+app.UseCors("AllowAll");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -174,7 +191,8 @@ app.MapControllers();
 // ============================================================
 using (var scope = app.Services.CreateScope())
 {
-    await RoleSeeder.SeedRolesAsync(scope.ServiceProvider);
+    // Seed roles on startup - commented out to prevent DNS crash
+    // RoleSeeder.SeedRolesAsync(scope.ServiceProvider);
 }
 
 app.Run();

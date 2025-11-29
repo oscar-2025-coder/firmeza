@@ -1,6 +1,6 @@
 ﻿using Firmeza.API.DTOs.Auth;
 using Firmeza.Infrastructure.Data;
-using Firmeza.Infrastructure.Entities;      // ✅ ENTIDADES CORRECTAS
+using Firmeza.Infrastructure.Entities;
 using Firmeza.Infrastructure.Identity;
 using Firmeza.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
@@ -9,7 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using ApplicationUser = Firmeza.Infrastructure.Identity.ApplicationUser;
+using Microsoft.EntityFrameworkCore;
 
 namespace Firmeza.API.Controllers
 {
@@ -31,9 +31,9 @@ namespace Firmeza.API.Controllers
             _emailService = emailService;
         }
 
-        // =========================================
+        // ============================================================
         // LOGIN
-        // =========================================
+        // ============================================================
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
@@ -45,22 +45,33 @@ namespace Firmeza.API.Controllers
             if (user == null)
                 return Unauthorized("Invalid credentials.");
 
-            var passwordValid = await _userManager.CheckPasswordAsync(user, request.Password);
-
-            if (!passwordValid)
+            var validPassword = await _userManager.CheckPasswordAsync(user, request.Password);
+            if (!validPassword)
                 return Unauthorized("Invalid credentials.");
 
+            // Obtener el Customer asociado
+            var customer = await _db.Customers
+                .FirstOrDefaultAsync(c => c.Email == user.Email);
+
+            if (customer == null)
+                return BadRequest("Customer does not exist.");
+
+            // Claims
             var roles = await _userManager.GetRolesAsync(user);
 
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Email, user.Email)
+                new Claim(ClaimTypes.Email, user.Email),
+
+                // IMPORTANTÍSIMO PARA EL FRONT
+                new Claim("customerId", customer.Id.ToString())
             };
 
             foreach (var role in roles)
                 claims.Add(new Claim(ClaimTypes.Role, role));
 
+            // JWT
             var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY");
             var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
             var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
@@ -86,32 +97,28 @@ namespace Firmeza.API.Controllers
             });
         }
 
-        // =========================================
-        // REGISTER (CLIENTE)
-        // =========================================
+        // ============================================================
+        // REGISTER
+        // ============================================================
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterCustomerRequest request)
         {
-            // 1. Validar email único
             var existing = await _userManager.FindByEmailAsync(request.Email);
             if (existing != null)
                 return BadRequest("A user with this email already exists.");
 
-            // 2. Crear IdentityUser
             var identityUser = new ApplicationUser
             {
                 UserName = request.Email,
                 Email = request.Email
             };
 
-            var userCreated = await _userManager.CreateAsync(identityUser, request.Password);
-            if (!userCreated.Succeeded)
-                return BadRequest(userCreated.Errors);
+            var created = await _userManager.CreateAsync(identityUser, request.Password);
+            if (!created.Succeeded)
+                return BadRequest(created.Errors);
 
-            // 3. Asignar rol Cliente
             await _userManager.AddToRoleAsync(identityUser, "Cliente");
 
-            // 4. Guardar Customer en base de datos
             var customer = new Customer
             {
                 Id = Guid.NewGuid(),
@@ -126,14 +133,12 @@ namespace Firmeza.API.Controllers
             _db.Customers.Add(customer);
             await _db.SaveChangesAsync();
 
-            // 5. Enviar correo de bienvenida
             await _emailService.SendEmailAsync(
                 request.Email,
                 "Welcome to Firmeza",
-                $"Hello {request.FullName}, your Firmeza account has been successfully created!"
+                $"Hello {request.FullName}, your account has been created!"
             );
 
-            // 6. Respuesta final
             return Ok(new
             {
                 message = "Customer registered successfully",

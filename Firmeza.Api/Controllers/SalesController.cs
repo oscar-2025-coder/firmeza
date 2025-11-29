@@ -16,12 +16,14 @@ namespace Firmeza.API.Controllers
         private readonly FirmezaDbContext _context;
         private readonly IMapper _mapper;
         private readonly IEmailService _emailService;
+        private readonly IPdfService _pdfService;
 
-        public SalesController(FirmezaDbContext context, IMapper mapper, IEmailService emailService)
+        public SalesController(FirmezaDbContext context, IMapper mapper, IEmailService emailService, IPdfService pdfService)
         {
             _context = context;
             _mapper = mapper;
             _emailService = emailService;
+            _pdfService = pdfService;
         }
 
         // ---------------------------------------------------------
@@ -120,30 +122,28 @@ namespace Firmeza.API.Controllers
             await _context.SaveChangesAsync();
 
             // ---------------------------------------------------------
-            // SEND EMAIL CONFIRMATION TO CUSTOMER
+            // SEND EMAIL CONFIRMATION WITH PDF TO CUSTOMER
             // ---------------------------------------------------------
             var saleDto = _mapper.Map<SaleDto>(sale);
 
+            // Generate PDF receipt
+            var pdfBytes = _pdfService.GenerateSaleReceipt(sale);
+
             var body = new StringBuilder();
-            body.Append($"<h2>Thank you for your purchase, {customer.FullName}!</h2>");
-            body.Append($"<p><strong>Sale ID:</strong> {sale.Id}</p>");
-            body.Append($"<p><strong>Date:</strong> {sale.Date.LocalDateTime}</p>");
-            body.Append("<h3>Items:</h3><ul>");
+            body.Append($"<h2>¡Gracias por su compra, {customer.FullName}!</h2>");
+            body.Append($"<p>Su comprobante de compra está adjunto en formato PDF.</p>");
+            body.Append($"<p><strong>ID de Venta:</strong> {sale.Id}</p>");
+            body.Append($"<p><strong>Fecha:</strong> {sale.Date.LocalDateTime:dd/MM/yyyy HH:mm}</p>");
+            body.Append($"<h3>Resumen:</h3>");
+            body.Append($"<p><strong>Total:</strong> ${sale.Total:N0} COP</p>");
+            body.Append($"<p style='color: #666; font-size: 12px;'>Por favor, revise el comprobante adjunto para más detalles.</p>");
 
-            foreach (var item in saleDto.Items)
-            {
-                body.Append($"<li>{item.ProductName} - Qty: {item.Quantity} - ${item.Amount}</li>");
-            }
-
-            body.Append("</ul>");
-            body.Append($"<p><strong>Subtotal:</strong> ${sale.Subtotal}</p>");
-            body.Append($"<p><strong>Tax (19%):</strong> ${sale.Tax}</p>");
-            body.Append($"<p><strong>Total:</strong> ${sale.Total}</p>");
-
-            await _emailService.SendEmailAsync(
+            await _emailService.SendEmailWithAttachmentAsync(
                 customer.Email,
-                "Purchase Confirmation - Firmeza",
-                body.ToString()
+                "Comprobante de Compra - Firmeza",
+                body.ToString(),
+                pdfBytes,
+                "comprobante.pdf"
             );
 
             return CreatedAtAction(nameof(GetById), new { id = sale.Id }, saleDto);
