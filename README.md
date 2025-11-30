@@ -2,9 +2,13 @@
 
 E-commerce system for selling construction materials and heavy machinery rental.
 
+**🔗 GitHub Repository**: [https://github.com/oscar-2025-coder/firmeza](https://github.com/oscar-2025-coder/firmeza)
+
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![.NET](https://img.shields.io/badge/.NET-8.0-purple.svg)
 ![React](https://img.shields.io/badge/React-19.2-blue.svg)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-8.0-blue.svg)
+![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED.svg)
 
 ---
 
