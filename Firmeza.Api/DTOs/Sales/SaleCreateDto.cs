@@ -2,7 +2,7 @@ namespace Firmeza.API.DTOs.Sales;
 
 public class SaleCreateDto
 {
-    public Guid CustomerId { get; set; }
+    public Guid? CustomerId { get; set; }
 
     public List<SaleItemCreateDto> Items { get; set; } = new();
 

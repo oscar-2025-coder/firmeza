@@ -4,6 +4,7 @@ using Firmeza.Infrastructure.Data;
 using Firmeza.Infrastructure.Entities;   // ✅ ENTIDADES CORRECTAS
 using Firmeza.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
@@ -11,6 +12,7 @@ namespace Firmeza.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class SalesController : ControllerBase
     {
         private readonly FirmezaDbContext _context;
@@ -68,7 +70,14 @@ namespace Firmeza.API.Controllers
         public async Task<ActionResult<SaleDto>> Create(SaleCreateDto dto)
         {
             // Validate Customer
-            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == dto.CustomerId);
+            // Obtener customerId del claim JWT
+            var claim = User.FindFirst("customerId");
+            if (claim == null)
+                return Unauthorized("Missing customerId claim.");
+            if (!Guid.TryParse(claim.Value, out var customerIdFromClaim))
+                return Unauthorized("Invalid customerId claim.");
+
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == customerIdFromClaim);
             if (customer == null)
                 return BadRequest("Customer does not exist.");
 
@@ -88,7 +97,7 @@ namespace Firmeza.API.Controllers
             var sale = new Sale
             {
                 Id = Guid.NewGuid(),
-                CustomerId = dto.CustomerId,
+                CustomerId = customerIdFromClaim,
                 Date = DateTimeOffset.UtcNow,
                 Notes = dto.Notes,
                 Status = SaleStatus.Confirmed,

@@ -1,19 +1,17 @@
 services:
 
   # ========================================
-  #  FIRMEZA ADMIN (Razor / Panel)
+  #  FIRMEZA TESTS (xUnit - Ejecutar primero)
   # ========================================
-  firmeza-admin:
+  firmeza-tests:
     build:
       context: .
-      dockerfile: Firmeza.Admin/Dockerfile
-    container_name: firmeza-admin
-    ports:
-      - "8080:8080"
+      dockerfile: Firmeza.Tests/Dockerfile
+    container_name: firmeza-tests
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      DB_CONNECTION: ${DB_CONNECTION}
-
+    # Este servicio debe completarse exitosamente antes de continuar
+    # Si las pruebas fallan, todo el despliegue se detiene
 
   # ========================================
   #  FIRMEZA API (REST API)
@@ -36,7 +34,26 @@ services:
       SMTP_EMAIL: ${SMTP_EMAIL}
       SMTP_PASSWORD: ${SMTP_PASSWORD}
       SMTP_ENABLE_SSL: ${SMTP_ENABLE_SSL}
+    depends_on:
+      firmeza-tests:
+        condition: service_completed_successfully
 
+  # ========================================
+  #  FIRMEZA ADMIN (Razor / Panel)
+  # ========================================
+  firmeza-admin:
+    build:
+      context: .
+      dockerfile: Firmeza.Admin/Dockerfile
+    container_name: firmeza-admin
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      DB_CONNECTION: ${DB_CONNECTION}
+    depends_on:
+      firmeza-tests:
+        condition: service_completed_successfully
 
   # ========================================
   #  FIRMEZA CLIENT (React Frontend)
@@ -49,4 +66,7 @@ services:
     ports:
       - "3000:80"
     depends_on:
-      - firmeza-api
+      firmeza-tests:
+        condition: service_completed_successfully
+      firmeza-api:
+        condition: service_started

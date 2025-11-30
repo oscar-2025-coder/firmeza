@@ -1,31 +1,25 @@
-# Stage 1: Build
-FROM node:18-alpine AS build
+# Usar Node 20 (más reciente y común en caché)
+FROM node:20-slim
 
 WORKDIR /app
 
-# Copy package files
+# Copiar archivos de dependencias
 COPY package*.json ./
 
-# Install dependencies
+# Instalar dependencias
 RUN npm install
 
-# Copy source code
+# Copiar código fuente
 COPY . .
 
-# Build for production
+# Construir para producción
 RUN npm run build
 
-# Stage 2: Serve with Nginx
-FROM nginx:alpine
+# Instalar servidor HTTP simple
+RUN npm install -g serve
 
-# Copy built assets from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
-
-# Copy nginx configuration (optional, for routing)
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port 80
+# Exponer puerto 80
 EXPOSE 80
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Servir la aplicación construida
+CMD ["serve", "-s", "dist", "-l", "80"]

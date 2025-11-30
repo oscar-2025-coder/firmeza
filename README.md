@@ -1,6 +1,6 @@
 # Firmeza - E-Commerce Platform
 
-Sistema de comercio electrónico para venta de materiales de construcción y alquiler de maquinaria pesada.
+E-commerce system for selling construction materials and heavy machinery rental.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![.NET](https://img.shields.io/badge/.NET-8.0-purple.svg)
@@ -8,73 +8,104 @@ Sistema de comercio electrónico para venta de materiales de construcción y alq
 
 ---
 
-## 📋 Índice
+## 📋 Table of Contents
 
-- [Características](#-características)
-- [Tecnologías](#-tecnologías)
-- [Requisitos Previos](#-requisitos-previos)
-- [Instalación y Ejecución](#-instalación-y-ejecución)
-- [Configuración SMTP](#-configuración-smtp)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
+- [Features](#-features)
+- [Technologies](#-technologies)
+- [Prerequisites](#-prerequisites)
+- [Installation and Setup](#-installation-and-setup)
+- [SMTP Configuration](#-smtp-configuration)
+- [Project Structure](#-project-structure)
 - [API Endpoints](#-api-endpoints)
-- [Contribución](#-contribución)
-- [Licencia](#-licencia)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ---
 
-## ✨ Características
+## ✨ Features
 
-- **Autenticación JWT**: Registro e inicio de sesión seguro para clientes
-- **Catálogo de Productos**: Navegación y búsqueda de productos
-- **Carrito de Compras**: Gestión de productos con cálculo automático de totales (IVA 19%)
-- **Checkout**: Procesamiento de órdenes con confirmación por correo electrónico
-- **Notificaciones Email**: Envío automático de comprobantes de compra vía SMTP
-- **UI/UX Moderna**: Interfaz responsive con Tailwind CSS
+- **JWT Authentication**: Secure registration and login for customers
+- **Product Catalog**: Browse and search products
+- **Shopping Cart**: Product management with automatic total calculation (19% VAT)
+- **Checkout**: Order processing with email confirmation
+- **Email Notifications**: Automatic purchase receipt delivery via SMTP
+- **Modern UI/UX**: Responsive interface with Tailwind CSS
 
 ---
 
-## 🛠 Tecnologías
+## 🛠 Technologies
 
 ### Backend
-- **ASP.NET Core 8.0** - Framework web
+- **ASP.NET Core 8.0** - Web framework
 - **Entity Framework Core** - ORM
-- **PostgreSQL** - Base de datos (Neon.tech)
-- **AutoMapper** - Mapeo objeto-objeto
-- **JWT** - Autenticación
-- **SMTP (Gmail)** - Servicio de correo
+- **PostgreSQL** - Database (Neon.tech)
+- **AutoMapper** - Object-to-object mapping
+- **JWT** - Authentication
+- **SMTP (Gmail)** - Email service
 
 ### Frontend
-- **React 19.2** - Librería UI
+- **React 19.2** - UI library
 - **Vite 7.2** - Build tool
-- **Tailwind CSS 3.4** - Framework CSS
-- **React Router 7.9** - Navegación
-- **Axios 1.13** - Cliente HTTP
-- **jwt-decode** - Decodificación de tokens
+- **Tailwind CSS 3.4** - CSS framework
+- **React Router 7.9** - Navigation
+- **Axios 1.13** - HTTP client
+- **jwt-decode** - Token decoding
 
 ---
 
-## 📦 Requisitos Previos
+## 📦 Prerequisites
 
 - [.NET SDK 8.0+](https://dotnet.microsoft.com/download)
 - [Node.js 18+](https://nodejs.org/)
-- [Docker](https://www.docker.com/) y [Docker Compose](https://docs.docker.com/compose/)
-- Cuenta de base de datos PostgreSQL (se recomienda [Neon.tech](https://neon.tech/))
-- Cuenta de Gmail para SMTP (o servidor SMTP alternativo)
+- [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/)
+- PostgreSQL database account (recommended: [Neon.tech](https://neon.tech/))
+- Gmail account for SMTP (or alternative SMTP server)
 
 ---
 
-## 🚀 Instalación y Ejecución
+## 🚀 Quick Start
 
-### 1. Clonar el Repositorio
+> 💡 **Hybrid Deployment**: This project uses a **hybrid approach** - the backend (API + Admin) runs in Docker, while the frontend must be run locally with `npm run dev` due to Docker packaging limitations.
+
+### Prerequisites
+- Docker and Docker Compose installed
+- Node.js 18+ installed
+- `.env` file configured (see below)
+
+### Run the Project
+
+**Terminal 1 - Backend (Docker):**
+```bash
+docker compose up --build firmeza-tests firmeza-api firmeza-admin
+```
+
+**Terminal 2 - Frontend (Local):**
+```bash
+cd firmeza-client
+npm install
+npm run dev
+```
+
+**Access:**
+- Frontend: http://localhost:5173
+- API: http://localhost:8081
+- Swagger: http://localhost:8081/swagger
+- Admin Panel: http://localhost:8082
+
+---
+
+## 🔧 Detailed Installation and Setup
+
+### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/tu-usuario/firmeza.git
+git clone https://github.com/your-username/firmeza.git
 cd firmeza
 ```
 
-### 2. Configurar Variables de Entorno
+### 2. Configure Environment Variables
 
-Crear un archivo `.env` en la raíz del proyecto:
+Create a `.env` file in the project root:
 
 ```env
 # Database
@@ -88,26 +119,26 @@ JWT_AUDIENCE=FirmezaClient
 # SMTP Configuration (Gmail)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_EMAIL=tu-email@gmail.com
-SMTP_PASSWORD=tu-app-password
+SMTP_EMAIL=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
 SMTP_ENABLE_SSL=true
 ```
 
-> ⚠️ **Nota**: Para Gmail, debes generar una "Contraseña de aplicación" en tu cuenta de Google. No uses tu contraseña principal.
+> ⚠️ **Note**: For Gmail, you must generate an "App Password" in your Google account. Do not use your main password.
 
-### 3. Ejecutar Backend (API)
+### 3. Run Backend (API)
 
-#### Opción A: Con Docker (Recomendado)
+#### Option A: With Docker (Recommended)
 
 ```bash
 docker compose up -d firmeza-api
 ```
 
-La API estará disponible en:
+The API will be available at:
 - **API**: http://localhost:8081
 - **Swagger**: http://localhost:8081/swagger
 
-#### Opción B: Sin Docker (Desarrollo Local)
+#### Option B: Without Docker (Local Development)
 
 ```bash
 cd Firmeza.Api
@@ -115,7 +146,9 @@ dotnet restore
 dotnet run
 ```
 
-### 4. Ejecutar Frontend
+### 4. Run Frontend
+
+> ⚠️ **Important**: The frontend must be run locally with `npm run dev` due to Docker packaging issues with Node.js base images. It cannot be containerized at this time.
 
 ```bash
 cd firmeza-client
@@ -123,127 +156,127 @@ npm install
 npm run dev
 ```
 
-El frontend estará disponible en: **http://localhost:5173**
+The frontend will be available at: **http://localhost:5173**
 
 ---
 
-## 📧 Configuración SMTP
+## 📧 SMTP Configuration
 
-El sistema utiliza SMTP para enviar correos electrónicos de confirmación de compra.
+The system uses SMTP to send purchase confirmation emails.
 
 ### Gmail
 
-1. Habilita la verificación en dos pasos en tu cuenta de Google
-2. Genera una "Contraseña de aplicación":
-   - Ve a https://myaccount.google.com/security
-   - Busca "Contraseñas de aplicaciones"
-   - Crea una nueva para "Correo"
-3. Usa esta contraseña en `SMTP_PASSWORD`
+1. Enable two-step verification in your Google account
+2. Generate an "App Password":
+   - Go to https://myaccount.google.com/security
+   - Search for "App passwords"
+   - Create a new one for "Mail"
+3. Use this password in `SMTP_PASSWORD`
 
-### Otro Proveedor SMTP
+### Other SMTP Provider
 
-Para usar otro servicio (ej. SendGrid, Mailgun, servidor corporativo):
+To use another service (e.g., SendGrid, Mailgun, corporate server):
 
-1. Actualiza las variables de entorno en `.env`:
+1. Update environment variables in `.env`:
    ```env
-   SMTP_HOST=smtp.tu-servidor.com
+   SMTP_HOST=smtp.your-server.com
    SMTP_PORT=587
-   SMTP_EMAIL=tu-email@dominio.com
-   SMTP_PASSWORD=tu-password
+   SMTP_EMAIL=your-email@domain.com
+   SMTP_PASSWORD=your-password
    SMTP_ENABLE_SSL=true
    ```
 
-2. No se requiere ningún cambio en el código. El sistema está diseñado para ser agnóstico del proveedor SMTP.
+2. No code changes required. The system is designed to be SMTP provider-agnostic.
 
 ---
 
-## 📁 Estructura del Proyecto
+## 📁 Project Structure
 
 ```
 firmeza/
-├── Firmeza.Api/              # API REST (ASP.NET Core)
-│   ├── Controllers/          # Endpoints de la API
+├── Firmeza.Api/              # REST API (ASP.NET Core)
+│   ├── Controllers/          # API endpoints
 │   ├── DTOs/                 # Data Transfer Objects
-│   ├── Program.cs            # Configuración de la aplicación
+│   ├── Program.cs            # Application configuration
 │   └── Properties/
-├── Firmeza.Infrastructure/   # Capa de infraestructura
-│   ├── Data/                 # DbContext y configuración EF
-│   ├── Entities/             # Entidades del dominio
-│   ├── Identity/             # Configuración de Identity
-│   └── Services/             # Servicios (Email, etc.)
-├── Firmeza.Admin/            # Panel administrativo (Razor Pages)
-├── Firmeza.Tests/            # Pruebas unitarias
+├── Firmeza.Infrastructure/   # Infrastructure layer
+│   ├── Data/                 # DbContext and EF configuration
+│   ├── Entities/             # Domain entities
+│   ├── Identity/             # Identity configuration
+│   └── Services/             # Services (Email, etc.)
+├── Firmeza.Admin/            # Admin panel (Razor Pages)
+├── Firmeza.Tests/            # Unit tests
 ├── firmeza-client/           # Frontend (React + Vite)
 │   ├── src/
-│   │   ├── api/              # Servicios de API
-│   │   ├── components/       # Componentes reutilizables
-│   │   ├── context/          # Contextos (Auth, Cart)
-│   │   ├── pages/            # Páginas de la aplicación
-│   │   └── main.jsx          # Punto de entrada
+│   │   ├── api/              # API services
+│   │   ├── components/       # Reusable components
+│   │   ├── context/          # Contexts (Auth, Cart)
+│   │   ├── pages/            # Application pages
+│   │   └── main.jsx          # Entry point
 │   ├── public/
 │   └── package.json
-├── docker-compose.yml        # Configuración de Docker
-└── .env                      # Variables de entorno (no versionado)
+├── docker-compose.yml        # Docker configuration
+└── .env                      # Environment variables (not versioned)
 ```
 
 ---
 
 ## 🔌 API Endpoints
 
-### Autenticación
+### Authentication
 
-- `POST /api/Auth/register` - Registrar nuevo cliente
-- `POST /api/Auth/login` - Iniciar sesión
+- `POST /api/Auth/register` - Register new customer
+- `POST /api/Auth/login` - Login
 
-### Productos
+### Products
 
-- `GET /api/Products` - Listar todos los productos
-- `GET /api/Products/{id}` - Obtener producto por ID
-- `GET /api/Products/search` - Buscar productos
+- `GET /api/Products` - List all products
+- `GET /api/Products/{id}` - Get product by ID
+- `GET /api/Products/search` - Search products
 
-### Ventas
+### Sales
 
-- `POST /api/Sales` - Crear nueva venta (requiere autenticación)
-- `GET /api/Sales/{id}` - Obtener venta por ID
+- `POST /api/Sales` - Create new sale (requires authentication)
+- `GET /api/Sales/{id}` - Get sale by ID
 
-> 📖 Documentación completa disponible en Swagger: **http://localhost:8081/swagger**
-
----
-
-## 🔐 Usuarios de Prueba
-
-### Cliente
-
-Para crear un cliente, usa el endpoint `/api/Auth/register` o la página de registro del frontend.
+> 📖 Complete documentation available at Swagger: **http://localhost:8081/swagger**
 
 ---
 
-## 🐳 Despliegue con Docker
+## 🔐 Test Users
 
-### Construir y Ejecutar Todo el Stack
+### Customer
+
+To create a customer, use the `/api/Auth/register` endpoint or the frontend registration page.
+
+---
+
+## 🐳 Docker Deployment
+
+### Build and Run the Full Stack
 
 ```bash
 docker compose up -d
 ```
 
-Esto levantará:
-- **firmeza-api** en puerto 8081
-- **firmeza-admin** en puerto 8080
+This will start:
+- **firmeza-api** on port 8081
+- **firmeza-admin** on port 8080
 
-### Reconstruir imágenes
+### Rebuild Images
 
 ```bash
 docker compose up -d --build
 ```
 
-### Ver logs
+### View Logs
 
 ```bash
 docker logs firmeza-api
 docker logs firmeza-admin
 ```
 
-### Detener servicios
+### Stop Services
 
 ```bash
 docker compose down
@@ -251,7 +284,7 @@ docker compose down
 
 ---
 
-## 🧪 Pruebas
+## 🧪 Testing
 
 ### Backend
 
@@ -269,32 +302,32 @@ npm run test
 
 ---
 
-## 🤝 Contribución
+## 🤝 Contributing
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
----
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+1. Fork the project
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ---
 
-## 👥 Autores
+## 📄 License
 
-- **Equipo Firmeza** - Desarrollo inicial
-
----
-
-## 📞 Soporte
-
-Para reportar bugs o solicitar nuevas funcionalidades, abre un [issue](https://github.com/tu-usuario/firmeza/issues).
+This project is licensed under the MIT License. See the `LICENSE` file for details.
 
 ---
 
-**¡Hecho con ❤️ por el equipo Firmeza!**
+## 👥 Authors
+
+- **Firmeza Team** - Initial development
+
+---
+
+## 📞 Support
+
+To report bugs or request new features, open an [issue](https://github.com/your-username/firmeza/issues).
+
+---
+
+**Made with ❤️ by the Firmeza team!**
