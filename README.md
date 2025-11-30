@@ -324,7 +324,7 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 ## 👥 Authors
 
-- **Firmeza Team** - Initial development
+- **Oscar Leonardo Ochoa Perez** - Full Stack Developer
 
 ---
 
