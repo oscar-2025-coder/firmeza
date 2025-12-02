@@ -94,7 +94,7 @@ npm run dev
 - Frontend: http://localhost:5173
 - API: http://localhost:8081
 - Swagger: http://localhost:8081/swagger
-- Admin Panel: http://localhost:8082
+- Admin Panel: http://localhost:8080
 
 ---
 
