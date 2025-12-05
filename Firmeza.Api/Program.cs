@@ -197,8 +197,21 @@ app.MapControllers();
 // ============================================================
 using (var scope = app.Services.CreateScope())
 {
-    // Seed roles on startup - commented out to prevent DNS crash
-    // RoleSeeder.SeedRolesAsync(scope.ServiceProvider);
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<FirmezaDbContext>();
+        // Automatically apply pending migrations
+        context.Database.Migrate();
+        
+        // Seed roles
+        await RoleSeeder.SeedRolesAsync(services);
+        Console.WriteLine("✅ Database migrated and roles seeded successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ An error occurred while migrating the database: {ex.Message}");
+    }
 }
 
 app.Run();

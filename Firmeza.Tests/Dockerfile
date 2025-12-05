@@ -1,25 +1,30 @@
-# Dockerfile para ejecutar pruebas automatizadas
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# Dockerfile for FIRMEZA TESTS
 
+# 1) Build Image
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copiar archivos de solución y proyectos
+# Copy solution and project files
 COPY ["Firmeza.sln", "./"]
-COPY ["Firmeza.Tests/Firmeza.Tests.csproj", "Firmeza.Tests/"]
 COPY ["Firmeza.Api/Firmeza.Api.csproj", "Firmeza.Api/"]
-COPY ["Firmeza.Infrastructure/Firmeza.Infrastructure.csproj", "Firmeza.Infrastructure/"]
 COPY ["Firmeza.Admin/Firmeza.Admin.csproj", "Firmeza.Admin/"]
+COPY ["Firmeza.Infrastructure/Firmeza.Infrastructure.csproj", "Firmeza.Infrastructure/"]
+COPY ["Firmeza.Tests/Firmeza.Tests.csproj", "Firmeza.Tests/"]
 
-# Restaurar dependencias
+# Restore dependencies
 RUN dotnet restore "Firmeza.Tests/Firmeza.Tests.csproj"
 
-# Copiar todo el código fuente
+# Copy full source code
 COPY . .
 
-# Compilar el proyecto de pruebas
+# Build
 WORKDIR "/src/Firmeza.Tests"
 RUN dotnet build "Firmeza.Tests.csproj" -c Release -o /app/build
 
-# Ejecutar las pruebas
-# Si alguna prueba falla, el contenedor terminará con código de salida != 0
-CMD ["dotnet", "test", "Firmeza.Tests.csproj", "--configuration", "Release", "--verbosity", "normal"]
+# 2) Test Runner
+# We use the SDK image because `dotnet test` requires the SDK, not just the Runtime.
+FROM build AS testrunner
+WORKDIR "/src/Firmeza.Tests"
+
+# Run tests and fail if any test fails
+ENTRYPOINT ["dotnet", "test", "Firmeza.Tests.csproj", "--configuration", "Release", "--logger", "trx;LogFileName=test_results.xml"]

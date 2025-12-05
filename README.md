@@ -81,37 +81,34 @@ E-commerce system for selling construction materials and heavy machinery rental.
 **Terminal 1 - Backend (Docker):**
 ```bash
 docker compose up --build firmeza-tests firmeza-api firmeza-admin
-```
+Terminal 2 - Frontend (Local):
 
-**Terminal 2 - Frontend (Local):**
-```bash
+bash
+Copiar código
 cd firmeza-client
 npm install
 npm run dev
-```
+Access:
 
-**Access:**
-- Frontend: http://localhost:5173
-- API: http://localhost:8081
-- Swagger: http://localhost:8081/swagger
-- Admin Panel: http://localhost:8080
+Frontend: http://localhost:5173
 
----
+API: http://localhost:8081
 
-## 🔧 Detailed Installation and Setup
+Swagger: http://localhost:8081/swagger
 
-### 1. Clone the Repository
+Admin Panel: http://localhost:8080
 
-```bash
+🔧 Detailed Installation and Setup
+1. Clone the Repository
+bash
+Copiar código
 git clone https://github.com/your-username/firmeza.git
 cd firmeza
-```
+2. Configure Environment Variables
+Create a .env file in the project root:
 
-### 2. Configure Environment Variables
-
-Create a `.env` file in the project root:
-
-```env
+env
+Copiar código
 # Database
 DB_CONNECTION=Host=your-host.neon.tech;Port=5432;Database=neondb;Username=user;Password=pass;SSL Mode=Require;Trust Server Certificate=true;
 
@@ -126,77 +123,73 @@ SMTP_PORT=587
 SMTP_EMAIL=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
 SMTP_ENABLE_SSL=true
-```
+⚠️ Note: For Gmail, you must generate an "App Password" in your Google account. Do not use your main password.
 
-> ⚠️ **Note**: For Gmail, you must generate an "App Password" in your Google account. Do not use your main password.
-
-### 3. Run Backend (API)
-
-#### Option A: With Docker (Recommended)
-
-```bash
-docker compose up -d firmeza-api
-```
-
+3. Run Backend (API)
+Option A: With Docker (Recommended)
+bash
+Copiar código
+docker compose up -d
 The API will be available at:
-- **API**: http://localhost:8081
-- **Swagger**: http://localhost:8081/swagger
 
-#### Option B: Without Docker (Local Development)
+API: http://localhost:8081
 
-```bash
+Swagger: http://localhost:8081/swagger
+
+Admin Panel: http://localhost:8080
+
+Option B: Without Docker (Local Development)
+bash
+Copiar código
 cd Firmeza.Api
 dotnet restore
 dotnet run
-```
+4. Run Frontend
+Option A: With Docker (Included in step 3)
+The frontend starts automatically with docker compose up.
+Access it at: http://localhost:3000
 
-### 4. Run Frontend
-
-> ⚠️ **Important**: The frontend must be run locally with `npm run dev` due to Docker packaging issues with Node.js base images. It cannot be containerized at this time.
-
-```bash
+Option B: Local Development
+bash
+Copiar código
 cd firmeza-client
 npm install
 npm run dev
-```
+The frontend will be available at: http://localhost:5173
 
-The frontend will be available at: **http://localhost:5173**
-
----
-
-## 📧 SMTP Configuration
-
+📧 SMTP Configuration
 The system uses SMTP to send purchase confirmation emails.
 
-### Gmail
+Gmail
+Enable two-step verification in your Google account
 
-1. Enable two-step verification in your Google account
-2. Generate an "App Password":
-   - Go to https://myaccount.google.com/security
-   - Search for "App passwords"
-   - Create a new one for "Mail"
-3. Use this password in `SMTP_PASSWORD`
+Generate an "App Password":
 
-### Other SMTP Provider
+Go to https://myaccount.google.com/security
 
+Search for "App passwords"
+
+Create a new one for "Mail"
+
+Use this password in SMTP_PASSWORD
+
+Other SMTP Provider
 To use another service (e.g., SendGrid, Mailgun, corporate server):
 
-1. Update environment variables in `.env`:
-   ```env
-   SMTP_HOST=smtp.your-server.com
-   SMTP_PORT=587
-   SMTP_EMAIL=your-email@domain.com
-   SMTP_PASSWORD=your-password
-   SMTP_ENABLE_SSL=true
-   ```
+Update environment variables in .env:
 
-2. No code changes required. The system is designed to be SMTP provider-agnostic.
+env
+Copiar código
+SMTP_HOST=smtp.your-server.com
+SMTP_PORT=587
+SMTP_EMAIL=your-email@domain.com
+SMTP_PASSWORD=your-password
+SMTP_ENABLE_SSL=true
+No code changes required. The system is designed to be SMTP provider-agnostic.
 
----
-
-## 📁 Project Structure
-
-```
+📁 Project Structure
+bash
+Copiar código
 firmeza/
 ├── Firmeza.Api/              # REST API (ASP.NET Core)
 │   ├── Controllers/          # API endpoints
@@ -221,117 +214,97 @@ firmeza/
 │   └── package.json
 ├── docker-compose.yml        # Docker configuration
 └── .env                      # Environment variables (not versioned)
-```
+🔌 API Endpoints
+Authentication
+POST /api/Auth/register - Register new customer
 
----
+POST /api/Auth/login - Login
 
-## 🔌 API Endpoints
+Products
+GET /api/Products - List all products
 
-### Authentication
+GET /api/Products/{id} - Get product by ID
 
-- `POST /api/Auth/register` - Register new customer
-- `POST /api/Auth/login` - Login
+GET /api/Products/search - Search products
 
-### Products
+Sales
+POST /api/Sales - Create new sale (requires authentication)
 
-- `GET /api/Products` - List all products
-- `GET /api/Products/{id}` - Get product by ID
-- `GET /api/Products/search` - Search products
+GET /api/Sales/{id} - Get sale by ID
 
-### Sales
+📖 Complete documentation available at Swagger: http://localhost:8081/swagger
 
-- `POST /api/Sales` - Create new sale (requires authentication)
-- `GET /api/Sales/{id}` - Get sale by ID
+🔐 Test Users
+Customer
+To create a customer, use the /api/Auth/register endpoint or the frontend registration page.
 
-> 📖 Complete documentation available at Swagger: **http://localhost:8081/swagger**
-
----
-
-## 🔐 Test Users
-
-### Customer
-
-To create a customer, use the `/api/Auth/register` endpoint or the frontend registration page.
-
----
-
-## 🐳 Docker Deployment
-
-### Build and Run the Full Stack
-
-```bash
+🐳 Docker Deployment
+Build and Run the Full Stack
+bash
+Copiar código
 docker compose up -d
-```
-
 This will start:
-- **firmeza-api** on port 8081
-- **firmeza-admin** on port 8080
 
-### Rebuild Images
+firmeza-api on port 8081
 
-```bash
+firmeza-admin on port 8080
+
+Rebuild Images
+bash
+Copiar código
 docker compose up -d --build
-```
-
-### View Logs
-
-```bash
+View Logs
+bash
+Copiar código
 docker logs firmeza-api
 docker logs firmeza-admin
-```
-
-### Stop Services
-
-```bash
+Stop Services
+bash
+Copiar código
 docker compose down
-```
-
----
-
-## 🧪 Testing
-
-### Backend
-
-```bash
+🧪 Testing
+Backend
+bash
+Copiar código
 cd Firmeza.Tests
 dotnet test
-```
-
-### Frontend
-
-```bash
+Frontend
+bash
+Copiar código
 cd firmeza-client
 npm run test
-```
+🤝 Contributing
+Fork the project
 
----
+Create a feature branch (git checkout -b feature/AmazingFeature)
 
-## 🤝 Contributing
+Commit your changes (git commit -m 'Add some AmazingFeature')
 
-1. Fork the project
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Push to the branch (git push origin feature/AmazingFeature)
 
----
+Open a Pull Request
 
-## 📄 License
+📄 License
+This project is licensed under the MIT License. See the LICENSE file for details.
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+👥 Authors
+Oscar Leonardo Ochoa Perez - Full Stack Developer
 
----
+📞 Support
+To report bugs or request new features, open an issue.
 
-## 👥 Authors
+Made with ❤️ by the Firmeza team!
 
-- **Oscar Leonardo Ochoa Perez** - Full Stack Developer
+bash
+Copiar código
 
----
+Ahora, para terminar el rebase y poder hacer push rápido:
 
-## 📞 Support
+1. Guarda el `README.md` con ese contenido.
+2. En la terminal:
 
-To report bugs or request new features, open an [issue](https://github.com/your-username/firmeza/issues).
-
----
-
-**Made with ❤️ by the Firmeza team!**
+```bash
+git status              # opcional, solo para ver el estado
+git add README.md       # marcas el conflicto como resuelto
+git rebase --continue   # termina el rebase
+git push origin main    # ahora sí sube

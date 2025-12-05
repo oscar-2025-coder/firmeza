@@ -1,25 +1,25 @@
-# Usar Node 20 (más reciente y común en caché)
-FROM node:20-slim
+# Stage 1: Build the React application
+FROM node:20-slim AS build
 
 WORKDIR /app
 
-# Copiar archivos de dependencias
+# Copy package files and install dependencies
 COPY package*.json ./
-
-# Instalar dependencias
 RUN npm install
 
-# Copiar código fuente
+# Copy source code and build
 COPY . .
-
-# Construir para producción
 RUN npm run build
 
-# Instalar servidor HTTP simple
-RUN npm install -g serve
+# Stage 2: Serve with Nginx
+FROM nginx:alpine
 
-# Exponer puerto 80
+# Copy built assets from builder stage
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Copy custom Nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 80
 
-# Servir la aplicación construida
-CMD ["serve", "-s", "dist", "-l", "80"]
+CMD ["nginx", "-g", "daemon off;"]

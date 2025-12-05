@@ -1,7 +1,7 @@
 services:
 
   # ========================================
-  #  FIRMEZA TESTS (xUnit - Ejecutar primero)
+  #  FIRMEZA TESTS (xUnit - Gatekeeper)
   # ========================================
   firmeza-tests:
     build:
@@ -10,8 +10,25 @@ services:
     container_name: firmeza-tests
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-    # Este servicio debe completarse exitosamente antes de continuar
-    # Si las pruebas fallan, todo el despliegue se detiene
+    # Essential: Deployment stops if this service fails (exit code != 0)
+    
+  # ========================================
+  #  DATABASE (PostgreSQL)
+  # ========================================
+  db:
+    image: postgres:15-alpine
+    container_name: firmeza-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-firmeza_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    depends_on:
+      firmeza-tests:
+        condition: service_completed_successfully
 
   # ========================================
   #  FIRMEZA API (REST API)
@@ -25,7 +42,8 @@ services:
       - "8081:8080"   # Swagger: http://localhost:8081/swagger
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      DB_CONNECTION: ${DB_CONNECTION}
+      # Update connection string to point to the 'db' container
+      DB_CONNECTION: "Host=db;Port=5432;Database=${DB_NAME:-firmeza_db};Username=${DB_USER:-postgres};Password=${DB_PASSWORD:-postgres}"
       JWT_KEY: ${JWT_KEY}
       JWT_ISSUER: ${JWT_ISSUER}
       JWT_AUDIENCE: ${JWT_AUDIENCE}
@@ -37,6 +55,8 @@ services:
     depends_on:
       firmeza-tests:
         condition: service_completed_successfully
+      db:
+        condition: service_started
 
   # ========================================
   #  FIRMEZA ADMIN (Razor / Panel)
@@ -50,10 +70,13 @@ services:
       - "8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      DB_CONNECTION: ${DB_CONNECTION}
+      # Update connection string to point to the 'db' container
+      DB_CONNECTION: "Host=db;Port=5432;Database=${DB_NAME:-firmeza_db};Username=${DB_USER:-postgres};Password=${DB_PASSWORD:-postgres}"
     depends_on:
       firmeza-tests:
         condition: service_completed_successfully
+      db:
+        condition: service_started
 
   # ========================================
   #  FIRMEZA CLIENT (React Frontend)
@@ -70,3 +93,6 @@ services:
         condition: service_completed_successfully
       firmeza-api:
         condition: service_started
+
+volumes:
+  postgres_data:
