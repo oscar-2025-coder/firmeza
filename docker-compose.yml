@@ -1,5 +1,4 @@
 services:
-
   # ========================================
   #  FIRMEZA TESTS (xUnit - Gatekeeper)
   # ========================================
@@ -10,25 +9,8 @@ services:
     container_name: firmeza-tests
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-    # Essential: Deployment stops if this service fails (exit code != 0)
-    
-  # ========================================
-  #  DATABASE (PostgreSQL)
-  # ========================================
-  db:
-    image: postgres:15-alpine
-    container_name: firmeza-db
-    environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${DB_NAME:-firmeza_db}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    depends_on:
-      firmeza-tests:
-        condition: service_completed_successfully
+    # Nota: si los tests necesitan DB, usarán la misma DB_CONNECTION del entorno (Neon),
+    # según cómo esté configurado el proyecto de tests.
 
   # ========================================
   #  FIRMEZA API (REST API)
@@ -42,8 +24,8 @@ services:
       - "8081:8080"   # Swagger: http://localhost:8081/swagger
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      # Update connection string to point to the 'db' container
-      DB_CONNECTION: "Host=db;Port=5432;Database=${DB_NAME:-firmeza_db};Username=${DB_USER:-postgres};Password=${DB_PASSWORD:-postgres}"
+      # Usa la cadena de conexión que tienes en tu .env (Neon)
+      DB_CONNECTION: "${DB_CONNECTION}"
       JWT_KEY: ${JWT_KEY}
       JWT_ISSUER: ${JWT_ISSUER}
       JWT_AUDIENCE: ${JWT_AUDIENCE}
@@ -55,8 +37,6 @@ services:
     depends_on:
       firmeza-tests:
         condition: service_completed_successfully
-      db:
-        condition: service_started
 
   # ========================================
   #  FIRMEZA ADMIN (Razor / Panel)
@@ -70,12 +50,12 @@ services:
       - "8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      # Update connection string to point to the 'db' container
-      DB_CONNECTION: "Host=db;Port=5432;Database=${DB_NAME:-firmeza_db};Username=${DB_USER:-postgres};Password=${DB_PASSWORD:-postgres}"
+      # También usa la conexión a Neon desde el .env
+      DB_CONNECTION: "${DB_CONNECTION}"
     depends_on:
       firmeza-tests:
         condition: service_completed_successfully
-      db:
+      firmeza-api:
         condition: service_started
 
   # ========================================
@@ -93,6 +73,3 @@ services:
         condition: service_completed_successfully
       firmeza-api:
         condition: service_started
-
-volumes:
-  postgres_data:
